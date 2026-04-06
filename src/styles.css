@@ -1,0 +1,159 @@
+@config "../tailwind.config.ts";
+
+@import url('https://fonts.googleapis.com/css2?family=MedievalSharp&family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap');
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --background: 30 15% 12%;
+    --foreground: 40 30% 85%;
+
+    --card: 35 25% 18%;
+    --card-foreground: 40 30% 85%;
+
+    --popover: 30 20% 15%;
+    --popover-foreground: 40 30% 85%;
+
+    --primary: 38 65% 50%;
+    --primary-foreground: 30 15% 8%;
+
+    --secondary: 30 20% 22%;
+    --secondary-foreground: 40 25% 80%;
+
+    --muted: 30 12% 20%;
+    --muted-foreground: 35 15% 55%;
+
+    --accent: 38 70% 45%;
+    --accent-foreground: 30 15% 8%;
+
+    --destructive: 0 65% 45%;
+    --destructive-foreground: 40 30% 90%;
+
+    --border: 30 15% 25%;
+    --input: 30 15% 25%;
+    --ring: 38 65% 50%;
+
+    --radius: 0.25rem;
+
+    --parchment: 40 45% 82%;
+    --parchment-foreground: 30 30% 15%;
+    --parchment-dark: 35 35% 65%;
+    --wood: 25 30% 20%;
+    --wood-light: 30 25% 30%;
+    --glow: 38 80% 55%;
+    --iron: 220 5% 35%;
+
+    --font-display: 'Cinzel', serif;
+    --font-quest: 'MedievalSharp', cursive;
+    --font-body: 'Crimson Text', serif;
+
+    --sidebar-background: 30 15% 10%;
+    --sidebar-foreground: 40 30% 85%;
+    --sidebar-primary: 38 65% 50%;
+    --sidebar-primary-foreground: 30 15% 8%;
+    --sidebar-accent: 30 20% 18%;
+    --sidebar-accent-foreground: 40 30% 85%;
+    --sidebar-border: 30 15% 20%;
+    --sidebar-ring: 38 65% 50%;
+  }
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: var(--font-body);
+  }
+
+  h1, h2, h3 {
+    font-family: var(--font-display);
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: var(--font-display);
+  }
+  .font-quest {
+    font-family: var(--font-quest);
+  }
+  .font-body {
+    font-family: var(--font-body);
+  }
+  .text-glow {
+    text-shadow: 0 0 10px hsl(var(--glow) / 0.6), 0 0 30px hsl(var(--glow) / 0.3);
+  }
+  .lantern-glow {
+    box-shadow: 0 0 40px 10px hsl(var(--glow) / 0.15), 0 0 80px 20px hsl(var(--glow) / 0.08);
+  }
+  .parchment-shadow {
+    box-shadow: 2px 3px 12px hsl(0 0% 0% / 0.5), inset 0 0 20px hsl(var(--parchment-dark) / 0.3);
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  user-select: none;
+}
+
+html {
+  -webkit-text-size-adjust: none;
+  text-size-adjust: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+body{
+  margin: 0;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+menu:not(article menu),
+ol:not(article ol),
+ul:not(article ul) {
+  list-style: none;
+}
+
+menu,
+ol,
+ul {
+  padding-left: 0;
+}
+
+article ol,
+article ul {
+  list-style-position: inside;
+}
+
+a {
+  text-underline-position: under;
+  text-decoration-thickness: 8;
+}
+
+label,
+button,
+select,
+summary,
+[type="radio"],
+[type="submit"],
+[type="checkbox"] {
+  cursor: pointer;
+}
