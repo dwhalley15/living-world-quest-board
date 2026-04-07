@@ -6,6 +6,7 @@ import {
   saveCharacter,
 } from './db'
 import { getSession } from './getSessionController'
+import { deleteImageFromBlobStorage } from './imageRemover'
 
 interface UpdateCharacterData {
   id: string
@@ -19,7 +20,6 @@ interface UpdateCharacterData {
 export async function updateCharacter(
   data: UpdateCharacterData,
 ): Promise<Character> {
-
   // Validate session
   const sessionCharacterId = await getSession()
   if (!sessionCharacterId) {
@@ -41,6 +41,17 @@ export async function updateCharacter(
   const available = await checkNameAvailable(data.name)
   if (!available && data.name !== existingCharacter.name) {
     throw new Error('Character name is already taken')
+  }
+
+  // If a new image URL is provided and it's different from the existing one, delete the old image from blob storage
+  if (
+    existingCharacter.imageUrl &&
+    data.imageUrl !== existingCharacter.imageUrl
+  ) {
+    const deleted = await deleteImageFromBlobStorage(existingCharacter.imageUrl)
+    if (!deleted) {
+      throw new Error('Failed to delete old image from blob storage')
+    }
   }
 
   // Build updated object

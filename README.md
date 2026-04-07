@@ -5,6 +5,7 @@ Welcome to your new TanStack Start app!
 To run this application:
 
 ```bash
+nvm use 22.17.0
 npm install
 npm run dev
 ```

@@ -1,6 +1,7 @@
 import { getSession } from './getSessionController'
-import { deleteCharacterFromDb } from './db'
+import { deleteCharacterFromDb, getCharacterById } from './db'
 import { destroySession } from './destroySessionController'
+import { deleteImageFromBlobStorage } from './imageRemover'
 
 
 export async function deleteCharacter(id: string) {
@@ -13,6 +14,20 @@ export async function deleteCharacter(id: string) {
     // Prevent deleting another character
     if (sessionCharacterId !== id) {
       throw new Error('Unauthorized')
+    }
+
+    //Get character from database to check if it exists
+    const character = await getCharacterById(id);
+    if (!character) {
+      throw new Error('Character not found')
+    }
+
+    //Delete image from blob storage if exists
+    if(character.imageUrl){
+      const deleted = await deleteImageFromBlobStorage(character.imageUrl)
+      if (!deleted) {
+        throw new Error('Failed to delete image from blob storage')
+      }
     }
 
     // Here you would add the logic to delete the character from the database
