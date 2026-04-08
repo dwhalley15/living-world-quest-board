@@ -1,6 +1,5 @@
 import { neon } from '@neondatabase/serverless'
 import type { Character, CharacterWithPassword } from '../types/character'
-import type { Quest } from '#/types/quest'
 
 let client: ReturnType<typeof neon>
 
@@ -132,7 +131,7 @@ export async function getCharacterById(id: string): Promise<Character | null> {
   }
   const result = await db.query(
     `
-    SELECT id, name, class, level, image_url
+    SELECT id, name, class, level, image_url, role
     FROM characters
     WHERE id = $1
     `,
@@ -155,6 +154,7 @@ export async function getCharacterById(id: string): Promise<Character | null> {
     name: row.name,
     class: row.class,
     level: row.level,
+    role: row.role,
     imageUrl: row.image_url ?? undefined,
   }
 }
@@ -168,7 +168,7 @@ export async function getCharacterByIdWithPassword(
   }
   const result = await db.query(
     `
-    SELECT id, name, class, level, image_url, password_hash
+    SELECT id, name, class, level, image_url, password_hash, role
     FROM characters
     WHERE id = $1
     `,
@@ -191,6 +191,7 @@ export async function getCharacterByIdWithPassword(
     name: row.name,
     class: row.class,
     level: row.level,
+    role: row.role,
     imageUrl: row.image_url ?? undefined,
     passwordHash: row.password_hash,
   }
@@ -215,7 +216,7 @@ export async function getCharacterByName(
   }
   const result = await db.query(
     `
-    SELECT id, name, class, level, image_url, password_hash
+    SELECT id, name, class, level, image_url, password_hash, role
     FROM characters
     WHERE name = $1
     `,
@@ -238,6 +239,7 @@ export async function getCharacterByName(
     name: row.name,
     class: row.class,
     level: row.level,
+    role: row.role,
     imageUrl: row.image_url ?? undefined,
     passwordHash: row.password_hash,
   }
@@ -255,7 +257,7 @@ export async function saveCharacter(
     UPDATE characters
     SET name = $1, class = $2, level = $3, image_url = $4, password_hash = $5
     WHERE id = $6
-    RETURNING id, name, class, level, image_url, password_hash
+    RETURNING id, name, class, level, image_url, role
     `,
     [
       character.name,
@@ -283,6 +285,7 @@ export async function saveCharacter(
     name: row.name,
     class: row.class,
     level: row.level,
+    role: row.role,
     imageUrl: row.image_url ?? undefined,
   }
 }

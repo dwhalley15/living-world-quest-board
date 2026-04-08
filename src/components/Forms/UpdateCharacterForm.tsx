@@ -71,6 +71,7 @@ export default function EditCharacterForm({
 
   const updateCharacterFnClient = useServerFn(updateCharacterFn)
   const deleteCharacterFnClient = useServerFn(deleteCharacterFn)
+  const MAX_FILE_SIZE = 2 * 1024 * 1024
 
   // Clean up preview URL when component unmounts or when a new file is selected
   useEffect(() => {
@@ -243,6 +244,11 @@ export default function EditCharacterForm({
                   if (loading) return
                   const file = e.target.files?.[0]
                   if (!file) return
+                  if (file.size > MAX_FILE_SIZE) {
+                    setError('File size exceeds 2MB limit')
+                    return
+                  }
+                  setError('')
                   setImageFile(file)
                   const url = URL.createObjectURL(file)
                   setPreviewUrl(url)

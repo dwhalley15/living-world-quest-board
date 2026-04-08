@@ -1,6 +1,6 @@
 import { Scroll, Trophy, Plus } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import type { Character } from '#/types/character'
 import type { Quest } from '#/types/quest'
 import QuestList from './QuestList'
@@ -18,8 +18,15 @@ export default function QuestBoard({
 }: QuestBoardProps) {
   const [activeTab, setActiveTab] = useState<'active' | 'completed'>('active')
   const [createOpen, setCreateOpen] = useState(false)
-  const activeQuests = quests.filter((q) => !q.isCompleted)
-  const completedQuests = quests.filter((q) => q.isCompleted)
+  const activeQuests = useMemo(
+    () => quests.filter((q) => !q.isCompleted),
+    [quests],
+  )
+  const completedQuests = useMemo(
+    () => quests.filter((q) => q.isCompleted),
+    [quests],
+  )
+  const isGod = activeCharacter?.role === 'god'
 
   return (
     <section>
@@ -49,7 +56,7 @@ export default function QuestBoard({
           </button>
         </div>
 
-        {activeCharacter && activeCharacter.class === 'God' && (
+        {isGod && (
           <motion.button
             onClick={() => setCreateOpen(true)}
             className="flex items-center gap-2 px-4 py-2 bg-primary/20 hover:bg-primary/30 border border-primary/30 text-primary font-display text-sm rounded transition-colors"
