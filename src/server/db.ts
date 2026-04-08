@@ -1,5 +1,6 @@
 import { neon } from '@neondatabase/serverless'
 import type { Character, CharacterWithPassword } from '../types/character'
+import type { Quest } from '#/types/quest'
 
 let client: ReturnType<typeof neon>
 
@@ -135,12 +136,17 @@ export async function getCharacterById(id: string): Promise<Character | null> {
     FROM characters
     WHERE id = $1
     `,
-    [id]
+    [id],
   )
   let row: any = null
   if (Array.isArray(result) && result.length > 0) {
     row = result[0]
-  } else if (result && 'rows' in result && Array.isArray(result.rows) && result.rows.length > 0) {
+  } else if (
+    result &&
+    'rows' in result &&
+    Array.isArray(result.rows) &&
+    result.rows.length > 0
+  ) {
     row = result.rows[0]
   }
   if (!row) return null
@@ -153,7 +159,9 @@ export async function getCharacterById(id: string): Promise<Character | null> {
   }
 }
 
-export async function getCharacterByIdWithPassword(id: string): Promise<CharacterWithPassword | null> {
+export async function getCharacterByIdWithPassword(
+  id: string,
+): Promise<CharacterWithPassword | null> {
   const db = await getDb()
   if (!db) {
     throw new Error('Database connection not available')
@@ -164,13 +172,17 @@ export async function getCharacterByIdWithPassword(id: string): Promise<Characte
     FROM characters
     WHERE id = $1
     `,
-    [id]
+    [id],
   )
   let row: any = null
   if (Array.isArray(result) && result.length > 0) {
     row = result[0]
-  }
-    else if (result && 'rows' in result && Array.isArray(result.rows) && result.rows.length > 0) {
+  } else if (
+    result &&
+    'rows' in result &&
+    Array.isArray(result.rows) &&
+    result.rows.length > 0
+  ) {
     row = result.rows[0]
   }
   if (!row) return null
@@ -189,13 +201,14 @@ export async function deleteSessionByToken(token: string) {
   if (!db) {
     throw new Error('Database connection not available')
   }
-  await db.query(
-    'DELETE FROM character_sessions WHERE session_token = $1',
-    [token],
-  )
+  await db.query('DELETE FROM character_sessions WHERE session_token = $1', [
+    token,
+  ])
 }
 
-export async function getCharacterByName(name: string): Promise<CharacterWithPassword | null> {
+export async function getCharacterByName(
+  name: string,
+): Promise<CharacterWithPassword | null> {
   const db = await getDb()
   if (!db) {
     throw new Error('Database connection not available')
@@ -206,12 +219,17 @@ export async function getCharacterByName(name: string): Promise<CharacterWithPas
     FROM characters
     WHERE name = $1
     `,
-    [name]
+    [name],
   )
   let row: any = null
   if (Array.isArray(result) && result.length > 0) {
     row = result[0]
-  } else if (result && 'rows' in result && Array.isArray(result.rows) && result.rows.length > 0) {
+  } else if (
+    result &&
+    'rows' in result &&
+    Array.isArray(result.rows) &&
+    result.rows.length > 0
+  ) {
     row = result.rows[0]
   }
   if (!row) return null
@@ -225,7 +243,9 @@ export async function getCharacterByName(name: string): Promise<CharacterWithPas
   }
 }
 
-export async function saveCharacter(character: CharacterWithPassword): Promise<Character> {
+export async function saveCharacter(
+  character: CharacterWithPassword,
+): Promise<Character> {
   const db = await getDb()
   if (!db) {
     throw new Error('Database connection not available')
@@ -237,12 +257,24 @@ export async function saveCharacter(character: CharacterWithPassword): Promise<C
     WHERE id = $6
     RETURNING id, name, class, level, image_url, password_hash
     `,
-    [character.name, character.class, character.level, character.imageUrl, character.passwordHash, character.id]
+    [
+      character.name,
+      character.class,
+      character.level,
+      character.imageUrl,
+      character.passwordHash,
+      character.id,
+    ],
   )
   let row: any = null
   if (Array.isArray(result) && result.length > 0) {
     row = result[0]
-  } else if (result && 'rows' in result && Array.isArray(result.rows) && result.rows.length > 0) {
+  } else if (
+    result &&
+    'rows' in result &&
+    Array.isArray(result.rows) &&
+    result.rows.length > 0
+  ) {
     row = result.rows[0]
   }
   if (!row) throw new Error('Failed to update character')
@@ -260,9 +292,33 @@ export async function deleteCharacterFromDb(id: string): Promise<boolean> {
   if (!db) {
     throw new Error('Database connection not available')
   }
-  await db.query(
-    'DELETE FROM characters WHERE id = $1',
-    [id]
-  )
+  await db.query('DELETE FROM characters WHERE id = $1', [id])
   return true
+}
+
+export async function getQuestsFromDb() {
+  const db = await getDb()
+
+  if (!db) {
+    throw new Error('Database connection not available')
+  }
+
+  const result = await db.query(`
+    SELECT
+      q.*,
+      COALESCE(
+        json_agg(c.name) FILTER (WHERE c.name IS NOT NULL),
+        '[]'
+      ) AS current_party
+    FROM quests q
+    LEFT JOIN quest_party qp ON qp.quest_id = q.id
+    LEFT JOIN characters c ON c.id = qp.character_id
+    GROUP BY q.id
+    ORDER BY q.created_at DESC
+  `)
+
+  if (Array.isArray(result)) return result
+  if (result && 'rows' in result) return result.rows
+
+  return []
 }

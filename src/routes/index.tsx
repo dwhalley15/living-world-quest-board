@@ -10,9 +10,15 @@ import { createServerFn } from '@tanstack/react-start'
 import type { Character } from '../types/character'
 import { getCharacterById } from '../server/db'
 import EditCharacterForm from '../components/Forms/UpdateCharacterForm'
+import QuestBoard from '../components/QuestBoard'
+import { getQuests } from '../server/getQuestsController'
 
 const sessionLoader = createServerFn({ method: 'GET' }).handler(() => {
   return getSession()
+})
+
+const questLoader = createServerFn({ method: 'GET' }).handler(async () => {
+    return getQuests()
 })
 
 export const Route = createFileRoute('/')({
@@ -24,9 +30,11 @@ export const Route = createFileRoute('/')({
       const characterData = await getCharacterById(characterId)
       activeCharacter = characterData
     }
-    return { activeCharacter }
+    const quests = await questLoader()
+    return { activeCharacter, quests }
   },
 })
+
 
 function App() {
   const loaderData = Route.useLoaderData()
@@ -34,6 +42,7 @@ function App() {
   const [editProfileOpen, setEditProfileOpen] = useState(false)
   const [loginOpen, setLoginOpen] = useState(false)
   const [charCreateOpen, setCharCreateOpen] = useState(false)
+  const [quests, setQuests] = useState(loaderData.quests)
 
   return (
     <main className="relative z-10 max-w-6xl mx-auto px-4 py-8">
@@ -44,6 +53,8 @@ function App() {
         setLoginOpen={setLoginOpen}
         setCharCreateOpen={setCharCreateOpen}
       />
+
+      <QuestBoard activeCharacter={activeCharacter} quests={quests} setQuests={setQuests} />
 
       <Modal
         open={editProfileOpen}
