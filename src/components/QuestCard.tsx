@@ -82,7 +82,7 @@ export default function QuestCard({
 
           {!quest.isCompleted && (
             <div className="mt-3 flex gap-2">
-              {!isFull && (
+              {!isFull && activeCharacter && (
                 <div className="flex items-center gap-1 px-3 py-1 bg-parchment-foreground/10 hover:bg-parchment-foreground/20 text-parchment-foreground text-xs font-display rounded transition-colors">
                   <Swords className="w-3 h-3" />
                   Join

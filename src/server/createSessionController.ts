@@ -1,4 +1,4 @@
-import { insertSession } from "./db"
+import { insertSession, deleteSessionsByCharacterId } from "./db"
 import { randomBytes } from 'node:crypto'
 
 export async function createSession(characterId: string) {
@@ -6,6 +6,8 @@ export async function createSession(characterId: string) {
 
   const expiresAt = new Date()
   expiresAt.setDate(expiresAt.getDate() + 7)
+
+  await deleteSessionsByCharacterId(characterId)
 
   await insertSession({
     characterId,

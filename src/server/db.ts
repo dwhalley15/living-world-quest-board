@@ -325,3 +325,92 @@ export async function getQuestsFromDb() {
 
   return []
 }
+
+export async function deleteSessionsByCharacterId(characterId: string) {
+  const db = await getDb()
+  if (!db) {
+    throw new Error('Database connection not available')
+  }
+  await db.query('DELETE FROM character_sessions WHERE character_id = $1', [
+    characterId,
+  ])
+}
+
+export async function getRoleById(characterId: string): Promise<string | null> {
+  const db = await getDb()
+  if (!db) {
+    throw new Error('Database connection not available')
+  }
+  const result = await db.query('SELECT role FROM characters WHERE id = $1', [
+    characterId,
+  ])
+  let row: any = null
+  if (Array.isArray(result) && result.length > 0) {
+    row = result[0]
+  } else if (
+    result &&
+    'rows' in result &&
+    Array.isArray(result.rows) &&
+    result.rows.length > 0
+  ) {
+    row = result.rows[0]
+  }
+  return row ? row.role : null
+}
+
+export async function insertQuestToDb(data: {
+  title: string
+  description: string
+  dateTime: string
+  partySize: number
+  location: string
+  creatorId: string
+  rotation: number
+}) {
+  const db = await getDb()
+  if (!db) {
+    throw new Error('Database connection not available')
+  }
+  const result = await db.query(
+    `
+    INSERT INTO quests (title, description, date_time, party_size, location, created_by, rotation)
+    VALUES ($1, $2, $3, $4, $5, $6, $7)
+    RETURNING id, title, description, date_time, party_size, location, created_by, created_at, is_completed, completion_message, rotation
+    `,
+    [
+      data.title,
+      data.description,
+      data.dateTime,
+      data.partySize,
+      data.location,
+      data.creatorId,
+      data.rotation,
+    ],
+  )
+  let row: any = null
+  if (Array.isArray(result) && result.length > 0) {
+    row = result[0]
+  } else if (
+    result &&
+    'rows' in result &&
+    Array.isArray(result.rows) &&
+    result.rows.length > 0
+  ) {
+    row = result.rows[0]
+  }
+  if (!row) return null
+  return {
+    id: row.id,
+    title: row.title,
+    description: row.description,
+    dateTime: row.date_time,
+    partySize: row.party_size,
+    location: row.location,
+    createdBy: row.created_by,
+    createdAt: row.created_at,
+    isCompleted: row.is_completed,
+    completionMessage: row.completion_message,
+    rotation: row.rotation,
+    currentParty: [],
+  }
+}
