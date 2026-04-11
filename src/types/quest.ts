@@ -10,4 +10,5 @@ export interface Quest {
   completionMessage?: string;
   createdBy: string;
   rotation: number;
+  createdByName: string;
 }

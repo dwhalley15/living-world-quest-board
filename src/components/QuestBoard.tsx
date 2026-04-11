@@ -1,4 +1,4 @@
-import { Scroll, Trophy, Plus } from 'lucide-react'
+import { Scroll, Trophy, Plus, Swords } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useMemo, useState } from 'react'
 import type { Character } from '#/types/character'
@@ -18,8 +18,11 @@ export default function QuestBoard({
   quests,
   setQuests,
 }: QuestBoardProps) {
-  const [activeTab, setActiveTab] = useState<'active' | 'completed'>('active')
+  const [activeTab, setActiveTab] = useState<
+    'unclaimed' | 'inProgress' | 'completed'
+  >('unclaimed')
   const [createOpen, setCreateOpen] = useState(false)
+
   const activeQuests = useMemo(
     () => quests.filter((q) => !q.isCompleted),
     [quests],
@@ -36,15 +39,32 @@ export default function QuestBoard({
         <div className="flex items-center justify-between mb-6">
           <div className="flex gap-1 bg-secondary/50 backdrop-blur-sm rounded p-1">
             <button
-              onClick={() => setActiveTab('active')}
+              onClick={() => setActiveTab('unclaimed')}
               className={`flex items-center gap-1.5 px-4 py-2 rounded text-sm font-display transition-colors ${
-                activeTab === 'active'
+                activeTab === 'unclaimed'
                   ? 'bg-primary/20 text-primary'
                   : 'text-foreground/50 hover:text-foreground/70'
               }`}
             >
               <Scroll className="w-4 h-4" />
-              Active ({activeQuests.length})
+              Unclaimed (
+              {activeQuests.length -
+                activeQuests.filter((q) => q.currentParty.length > 0).length}
+              )
+            </button>
+            <button
+              onClick={() => setActiveTab('inProgress')}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded text-sm font-display transition-colors ${
+                activeTab === 'inProgress'
+                  ? 'bg-primary/20 text-primary'
+                  : 'text-foreground/50 hover:text-foreground/70'
+              }`}
+            >
+              <Swords className="w-4 h-4" />
+              In Progress (
+              {activeQuests.length &&
+                activeQuests.filter((q) => q.currentParty.length > 0).length}
+              )
             </button>
             <button
               onClick={() => setActiveTab('completed')}
@@ -72,7 +92,13 @@ export default function QuestBoard({
           )}
         </div>
         <QuestList
-          quests={activeTab === 'active' ? activeQuests : completedQuests}
+          quests={
+            activeTab === 'unclaimed'
+              ? activeQuests.filter((q) => q.currentParty.length === 0)
+              : activeTab === 'inProgress'
+                ? activeQuests.filter((q) => q.currentParty.length > 0)
+                : completedQuests
+          }
           activeCharacter={activeCharacter}
           setQuests={setQuests}
         />

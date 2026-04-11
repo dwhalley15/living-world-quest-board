@@ -309,14 +309,22 @@ export async function getQuestsFromDb() {
   const result = await db.query(`
     SELECT
       q.*,
+      creator.name AS created_by_name,
+
       COALESCE(
-        json_agg(c.name) FILTER (WHERE c.name IS NOT NULL),
+        json_agg(party_member.name) 
+        FILTER (WHERE party_member.name IS NOT NULL),
         '[]'
       ) AS current_party
+
     FROM quests q
+
+    LEFT JOIN characters creator ON creator.id = q.created_by
+
     LEFT JOIN quest_party qp ON qp.quest_id = q.id
-    LEFT JOIN characters c ON c.id = qp.character_id
-    GROUP BY q.id
+    LEFT JOIN characters party_member ON party_member.id = qp.character_id
+
+    GROUP BY q.id, creator.name
     ORDER BY q.created_at DESC
   `)
 
@@ -413,4 +421,41 @@ export async function insertQuestToDb(data: {
     rotation: row.rotation,
     currentParty: [],
   }
+}
+
+export async function getCharacterNameById(id: string): Promise<string | null> {
+  const db = await getDb()
+  if (!db) {
+    throw new Error('Database connection not available')
+  }
+  const result = await db.query('SELECT name FROM characters WHERE id = $1', [
+    id,
+  ])
+  let row: any = null
+  if (Array.isArray(result) && result.length > 0) {
+    row = result[0]
+  } else if (
+    result &&
+    'rows' in result &&
+    Array.isArray(result.rows) &&
+    result.rows.length > 0
+  ) {
+    row = result.rows[0]
+  }
+  return row ? row.name : null
+}
+
+export async function addCharacterToQuestInDb(
+  questId: string,
+  characterId: string,
+): Promise<boolean> {
+  const db = await getDb()
+  if (!db) {
+    throw new Error('Database connection not available')
+  }
+  await db.query(
+    'INSERT INTO quest_party (quest_id, character_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+    [questId, characterId],
+  )
+  return true
 }

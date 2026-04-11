@@ -1,5 +1,5 @@
 import type { Quest } from '#/types/quest'
-import { getRoleById, insertQuestToDb,  } from './db'
+import { getRoleById, insertQuestToDb, getCharacterNameById  } from './db'
 import { getSession } from './getSessionController'
 
 export async function createQuest(data: {
@@ -36,5 +36,10 @@ export async function createQuest(data: {
     throw new Error('Failed to create quest')
   }
 
-    return quest
+  const characterName = await getCharacterNameById(data.creatorId)
+  if (!characterName) {
+    throw new Error('Character not found')
+  }
+
+    return { ...quest, createdByName: characterName }
 }

@@ -16,7 +16,7 @@ const createQuestFn = createServerFn({ method: 'POST' })
       title: z.string().min(1, 'Title is required'),
       description: z.string().min(1, 'Description is required'),
       dateTime: z.string().refine((val) => !isNaN(Date.parse(val)), {
-        message: 'Invalid date and time',
+        message: 'Invalid date format',
       }),
       partySize: z
         .number()
@@ -47,11 +47,6 @@ export default function CreateQuestForm({
 }: CreateQuestFormProps) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  const [dateTime, setDateTime] = useState(() => {
-    const d = new Date()
-    d.setHours(d.getHours() + 1)
-    return d.toISOString().slice(0, 16)
-  })
   const [partySize, setPartySize] = useState(1)
   const [location, setLocation] = useState('')
   const [loading, setLoading] = useState(false)
@@ -73,9 +68,9 @@ export default function CreateQuestForm({
         data: {
           title,
           description,
-          dateTime,
           partySize,
           location,
+          dateTime: new Date().toISOString(),
           creatorId: activeCharacter?.id,
           rotation: getRotation(),
         },
@@ -98,11 +93,6 @@ export default function CreateQuestForm({
     return rotations[index]
   }
 
-  function getMinDateTime() {
-    const now = new Date()
-    now.setMinutes(now.getMinutes() - now.getTimezoneOffset())
-    return now.toISOString().slice(0, 16)
-  }
 
   return (
     <form onSubmit={handleSubmit} className="mt-4 space-y-4">
@@ -135,19 +125,6 @@ export default function CreateQuestForm({
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="block text-sm font-display text-parchment-foreground/80 mb-1">
-            Date & Time
-          </label>
-          <input
-            type="datetime-local"
-            required
-            value={dateTime}
-            min={getMinDateTime()}
-            onChange={(e) => setDateTime(e.target.value)}
-            className="w-full px-3 py-2 bg-parchment-foreground/5 border border-parchment-foreground/20 rounded text-parchment-foreground font-body focus:outline-none focus:border-parchment-foreground/40"
-          />
-        </div>
         <div>
           <label className="block text-sm font-display text-parchment-foreground/80 mb-1">
             Party Size
