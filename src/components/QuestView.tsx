@@ -294,10 +294,10 @@ export default function QuestView({
         )}
       </Modal>
 
-      {/* <Modal title="Complete Quest" open={showCompleteQuestModal} onClose={() => setShowCompleteQuestModal(false)} size="sm"
+      <Modal title="Complete Quest" open={showCompleteQuestModal} onClose={() => setShowCompleteQuestModal(false)} size="sm"
       >
         <CompleteQuestForm quest={quest} activeCharacter={activeCharacter} setQuests={setQuests} />
-      </Modal> */}
+      </Modal>
     </>
   )
 }
