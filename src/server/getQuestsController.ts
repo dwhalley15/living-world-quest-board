@@ -19,5 +19,6 @@ export async function getQuests(): Promise<Quest[]> {
     createdBy: row.created_by,
     rotation: row.rotation ?? 0,
     createdByName: row.created_by_name ?? 'Unknown Adventurer',
+    partyLeader: row.party_leader?.id ? row.party_leader : null,
   }))
 }

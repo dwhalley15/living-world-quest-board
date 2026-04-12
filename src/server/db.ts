@@ -3,6 +3,7 @@ import type { Character, CharacterWithPassword } from '../types/character'
 
 let client: ReturnType<typeof neon>
 
+// Database helper functions
 export async function getDb() {
   if (!process.env.DATABASE_URL) {
     return undefined
@@ -308,24 +309,42 @@ export async function getQuestsFromDb() {
 
   const result = await db.query(`
     SELECT
-      q.*,
-      creator.name AS created_by_name,
+  q.*,
+  creator.name AS created_by_name,
 
-      COALESCE(
-        json_agg(party_member.name) 
-        FILTER (WHERE party_member.name IS NOT NULL),
-        '[]'
-      ) AS current_party
+  json_build_object(
+    'id', leader.id,
+    'name', leader.name,
+    'class', leader.class,
+    'level', leader.level,
+    'role', leader.role,
+    'imageUrl', leader.image_url
+  ) AS party_leader,
 
-    FROM quests q
+  COALESCE(
+    json_agg(
+      json_build_object(
+        'id', party_member.id,
+        'name', party_member.name,
+        'class', party_member.class,
+        'level', party_member.level,
+        'role', party_member.role,
+        'imageUrl', party_member.image_url
+      )
+    ) FILTER (WHERE party_member.id IS NOT NULL),
+    '[]'
+  ) AS current_party
 
-    LEFT JOIN characters creator ON creator.id = q.created_by
+FROM quests q
 
-    LEFT JOIN quest_party qp ON qp.quest_id = q.id
-    LEFT JOIN characters party_member ON party_member.id = qp.character_id
+LEFT JOIN characters creator ON creator.id = q.created_by
+LEFT JOIN characters leader ON leader.id = q.party_leader
 
-    GROUP BY q.id, creator.name
-    ORDER BY q.created_at DESC
+LEFT JOIN quest_party qp ON qp.quest_id = q.id
+LEFT JOIN characters party_member ON party_member.id = qp.character_id
+
+GROUP BY q.id, creator.name, leader.id
+ORDER BY q.created_at DESC
   `)
 
   if (Array.isArray(result)) return result
@@ -420,6 +439,7 @@ export async function insertQuestToDb(data: {
     completionMessage: row.completion_message,
     rotation: row.rotation,
     currentParty: [],
+    partyLeader: null,
   }
 }
 
@@ -445,17 +465,84 @@ export async function getCharacterNameById(id: string): Promise<string | null> {
   return row ? row.name : null
 }
 
-export async function addCharacterToQuestInDb(
+export async function addPartyLeaderToQuestInDb(
   questId: string,
   characterId: string,
-): Promise<boolean> {
+) {
   const db = await getDb()
-  if (!db) {
-    throw new Error('Database connection not available')
-  }
+  if (!db) throw new Error('Database connection not available')
+
+  await db.query('UPDATE quests SET party_leader = $1 WHERE id = $2', [
+    characterId,
+    questId,
+  ])
+
+  return true
+}
+
+export async function removePartyLeaderFromQuestInDb(
+  questId: string,
+  characterId: string,
+) {
+  const db = await getDb()
+  if (!db) throw new Error('Database connection not available')
   await db.query(
-    'INSERT INTO quest_party (quest_id, character_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+    'UPDATE quests SET party_leader = NULL WHERE id = $1 AND party_leader = $2',
     [questId, characterId],
   )
+
   return true
+}
+
+export async function getQuestByIdFromDb(questId: string) {
+  const db = await getDb()
+  if (!db) throw new Error('Database connection not available')
+
+  const result = await db.query(
+    `
+    SELECT
+  q.*,
+  creator.name AS created_by_name,
+
+  COALESCE(
+    json_agg(party_member.name)
+    FILTER (WHERE party_member.name IS NOT NULL),
+    '[]'
+  ) AS current_party,
+
+  json_build_object(
+    'id', leader.id,
+    'name', leader.name,
+    'class', leader.class,
+    'level', leader.level,
+    'role', leader.role,
+    'imageUrl', leader.image_url
+  ) AS party_leader
+
+FROM quests q
+
+LEFT JOIN characters creator ON creator.id = q.created_by
+LEFT JOIN characters leader ON leader.id = q.party_leader
+LEFT JOIN quest_party qp ON qp.quest_id = q.id
+LEFT JOIN characters party_member ON party_member.id = qp.character_id
+
+WHERE q.id = $1
+
+GROUP BY q.id, creator.name, leader.id
+    `,
+    [questId],
+  )
+
+  let row: any = null
+  if (Array.isArray(result) && result.length > 0) {
+    row = result[0]
+  } else if (
+    result &&
+    'rows' in result &&
+    Array.isArray(result.rows) &&
+    result.rows.length > 0
+  ) {
+    row = result.rows[0]
+  }
+  return row
 }

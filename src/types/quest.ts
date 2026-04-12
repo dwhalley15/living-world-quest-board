@@ -1,3 +1,5 @@
+import type { Character } from "./character";
+
 export interface Quest {
   id: string;
   title: string;
@@ -5,7 +7,8 @@ export interface Quest {
   dateTime: string;
   location: string;
   partySize: number;
-  currentParty: string[];
+  partyLeader: Character | null;
+  currentParty: Character[];
   isCompleted: boolean;
   completionMessage?: string;
   createdBy: string;

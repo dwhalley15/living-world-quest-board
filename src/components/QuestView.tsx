@@ -1,14 +1,22 @@
 import type { Character } from '#/types/character'
 import type { Quest } from '#/types/quest'
-import { Calendar, CheckCircle2, MapPin, Swords, User } from 'lucide-react'
+import {
+  Calendar,
+  CheckCircle2,
+  Crown,
+  MapPin,
+  Swords,
+  User,
+} from 'lucide-react'
 import { useServerFn, createServerFn } from '@tanstack/react-start'
 import { z } from 'zod'
-import { joinQuest } from '#/server/joinQuestController'
-import { useState } from 'react'
+import { claimQuest } from '#/server/claimQuestController'
+import { useMemo, useState } from 'react'
 import Modal from './Modal'
 import CharacterProfile from './CharacterProfile'
+import { unclaimQuest } from '#/server/unclaimQuestController'
 
-const joinQuestFn = createServerFn({ method: 'POST' })
+const claimQuestFn = createServerFn({ method: 'POST' })
   .inputValidator(
     z.object({
       questId: z.string().min(1),
@@ -16,8 +24,20 @@ const joinQuestFn = createServerFn({ method: 'POST' })
     }),
   )
   .handler(async ({ data }) => {
-    await joinQuest(data.questId, data.activeCharacterId)
-    return { success: true }
+    const claimedQuest = await claimQuest(data.questId, data.activeCharacterId)
+    return { success: true, claimedQuest }
+  })
+
+  const unclaimQuestFn = createServerFn({ method: 'POST' })
+  .inputValidator(
+    z.object({
+      questId: z.string().min(1),
+      activeCharacterId: z.string().min(1),
+    }),
+  )
+  .handler(async ({ data }) => {
+    const quest = await unclaimQuest(data.questId, data.activeCharacterId)
+    return { success: true, quest }
   })
 
 interface QuestViewProps {
@@ -33,11 +53,11 @@ export default function QuestView({
 }: QuestViewProps) {
   const [error, setError] = useState<string | null>(null)
   const [showCharacterModal, setShowCharacterModal] = useState(false)
-  const [selectedCharacterName, setSelectedCharacterName] = useState<
-    string | null
-  >(null)
+  const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(
+    null,
+  )
   const isGod = activeCharacter?.role === 'god'
-  const hasParty = quest.currentParty.length > 0
+  const isClaimed = quest.partyLeader !== null
   const formattedDate = new Date(quest.dateTime).toLocaleDateString('en-US', {
     weekday: 'long',
     month: 'long',
@@ -47,33 +67,65 @@ export default function QuestView({
     minute: '2-digit',
   })
 
-  const joinQuestServer = useServerFn(joinQuestFn)
+  const fullParty = useMemo(
+    () => quest.currentParty.length + (quest.partyLeader ? 1 : 0),
+    [quest.currentParty.length, quest.partyLeader],
+  )
 
-  const joinQuest = () => {
+  const isLeader = quest.partyLeader?.id === activeCharacter?.id
+
+  const claimQuestServer = useServerFn(claimQuestFn)
+
+  const unclaimQuestServer = useServerFn(unclaimQuestFn)
+
+  const claimQuest = async () => {
     if (!activeCharacter) return
-    if (hasParty) {
-      setError('This quest is already full.')
+    if (isClaimed) {
+      setError('This quest has already been claimed.')
       return
     }
     try {
-      setQuests((prev) =>
-        prev.map((q) => {
-          if (q.id !== quest.id) return q
-          if (q.currentParty.includes(activeCharacter.name)) return q
-          return {
-            ...q,
-            currentParty: [...q.currentParty, activeCharacter.name],
-          }
-        }),
-      )
-      joinQuestServer({
+      const result = await claimQuestServer({
         data: { questId: quest.id, activeCharacterId: activeCharacter.id },
       })
+
+      if (!result.claimedQuest) {
+        setError('Failed to claim quest. Please try again.')
+        return
+      }
+
+      setQuests((prev) =>
+        prev.map((q) => (q.id === quest.id ? result.claimedQuest : q)),
+      )
     } catch (err) {
-      setError('Failed to join quest. Please try again.')
+      setError('Failed to claim quest. Please try again.')
       return
     }
   }
+
+  const unclaimQuest = async () => {
+  if (!activeCharacter) return
+
+  try {
+    const result = await unclaimQuestServer({
+      data: {
+        questId: quest.id,
+        activeCharacterId: activeCharacter.id,
+      },
+    })
+
+    if (!result.quest) {
+      setError('Failed to unclaim quest.')
+      return
+    }
+
+    setQuests((prev) =>
+      prev.map((q) => (q.id === quest.id ? result.quest : q)),
+    )
+  } catch {
+    setError('Failed to unclaim quest.')
+  }
+}
 
   return (
     <>
@@ -97,17 +149,17 @@ export default function QuestView({
 
         {/* Details */}
         <div className="mt-4 grid grid-cols-2 gap-3">
-            {quest.isCompleted && (
-          <div>
-            <h4 className="text-xs font-display text-parchment-foreground/50 uppercase tracking-wider mb-1">
-              Date & Time
-            </h4>
-            <div className="flex items-center gap-1.5 text-sm text-parchment-foreground/70 font-body">
-              <Calendar className="w-3.5 h-3.5" />
-              <span>{formattedDate}</span>
+          {quest.isCompleted && (
+            <div>
+              <h4 className="text-xs font-display text-parchment-foreground/50 uppercase tracking-wider mb-1">
+                Date & Time
+              </h4>
+              <div className="flex items-center gap-1.5 text-sm text-parchment-foreground/70 font-body">
+                <Calendar className="w-3.5 h-3.5" />
+                <span>{formattedDate}</span>
+              </div>
             </div>
-          </div>
-            )}
+          )}
           <div>
             <h4 className="text-xs font-display text-parchment-foreground/50 uppercase tracking-wider mb-1">
               Location
@@ -123,23 +175,35 @@ export default function QuestView({
         {/* Party Members */}
         <div className="mt-4">
           <h4 className="text-xs font-display text-parchment-foreground/50 uppercase tracking-wider mb-2">
-            Party ({quest.currentParty.length}/{quest.partySize})
+            Party ({fullParty}/{quest.partySize})
           </h4>
           <div className="flex flex-wrap gap-2">
+            {quest.partyLeader && (
+              <button
+                onClick={() => {
+                  setSelectedCharacter(quest.partyLeader!)
+                  setShowCharacterModal(true)
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-500/10 hover:bg-yellow-500/20 border border-yellow-500/30 rounded text-xs font-display text-parchment-foreground transition-colors"
+              >
+                <Crown className="w-3 h-3" />
+                {quest.partyLeader.name}
+              </button>
+            )}
             {quest.currentParty.map((member) => (
               <button
-                key={member}
+                key={member.id}
                 onClick={() => {
-                  setSelectedCharacterName(member)
+                  setSelectedCharacter(member)
                   setShowCharacterModal(true)
                 }}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-parchment-foreground/10 hover:bg-parchment-foreground/20 rounded text-parchment-foreground text-xs font-display transition-colors cursor-pointer"
               >
                 <User className="w-3 h-3" />
-                {member}
+                {member.name}
               </button>
             ))}
-            {quest.currentParty.length === 0 && (
+            {fullParty === 0 && (
               <p className="text-xs italic text-parchment-foreground/40 font-body">
                 No adventurers have claimed this quest yet...
               </p>
@@ -176,19 +240,26 @@ export default function QuestView({
         <div className="mt-5 flex gap-2">
           {!quest.isCompleted && activeCharacter && (
             <>
-              {!hasParty && (
+              {!isClaimed && (
                 <button
-                  onClick={() => {
-                    joinQuest()
-                  }}
+                  onClick={claimQuest}
                   className="flex items-center gap-1.5 px-4 py-2 bg-parchment-foreground/15 hover:bg-parchment-foreground/25 border border-parchment-foreground/30 text-parchment-foreground font-display text-sm rounded transition-colors"
                 >
                   <Swords className="w-3.5 h-3.5" />
-                  Take Quest
+                  Claim Quest
+                </button>
+              )}
+              {isLeader && (
+                <button
+                  onClick={unclaimQuest}
+                  className="flex items-center gap-1.5 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-700 font-display text-sm rounded transition-colors"
+                >
+                  <Swords className="w-3.5 h-3.5 rotate-180" />
+                  Unclaim Quest
                 </button>
               )}
 
-              {isGod && (
+              {isGod && quest.partyLeader != null && (
                 <button
                   onClick={() => {
                     /* Complete quest logic here */
@@ -210,8 +281,8 @@ export default function QuestView({
         onClose={() => setShowCharacterModal(false)}
         size="sm"
       >
-        {selectedCharacterName && (
-          <CharacterProfile characterName={selectedCharacterName} />
+        {selectedCharacter && (
+          <CharacterProfile character={selectedCharacter} />
         )}
       </Modal>
     </>

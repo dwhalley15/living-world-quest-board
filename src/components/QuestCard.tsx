@@ -1,9 +1,16 @@
 import type { Character } from '#/types/character'
 import type { Quest } from '#/types/quest'
 import { motion } from 'framer-motion'
-import { CheckCircle2, Calendar, MapPin, Users, Swords } from 'lucide-react'
+import {
+  CheckCircle2,
+  Calendar,
+  MapPin,
+  Users,
+  Swords,
+  Crown,
+} from 'lucide-react'
 import Modal from '../components/Modal'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import QuestDetails from './QuestDetails'
 
 interface QuestCardProps {
@@ -27,6 +34,15 @@ export default function QuestCard({
     minute: '2-digit',
   })
   const isGod = activeCharacter?.role === 'god'
+
+  const fullParty = useMemo(
+    () => quest.currentParty.length + (quest.partyLeader ? 1 : 0),
+    [quest.currentParty.length, quest.partyLeader],
+  )
+
+  const isClaimed = quest.partyLeader !== null
+
+  const isLeader = quest.partyLeader?.id === activeCharacter?.id
 
   return (
     <>
@@ -78,20 +94,32 @@ export default function QuestCard({
             <div className="flex items-center gap-1.5">
               <Users className="w-3.5 h-3.5" />
               <span>
-                {quest.currentParty.length}/{quest.partySize} adventurers
+                {fullParty}/{quest.partySize} adventurers
               </span>
             </div>
+            {quest.partyLeader && (
+              <div className="flex items-center gap-1.5">
+                <Crown className="w-3.5 h-3.5" />
+                <span>{quest.partyLeader.name}</span>
+              </div>
+            )}
           </div>
 
-          {!quest.isCompleted && (
+          {!quest.isCompleted && activeCharacter && (
             <div className="mt-3 flex gap-2">
-              {!hasParty && activeCharacter && (
+              {!isClaimed &&  (
                 <div className="flex items-center gap-1 px-3 py-1 bg-parchment-foreground/10 hover:bg-parchment-foreground/20 text-parchment-foreground text-xs font-display rounded transition-colors">
                   <Swords className="w-3 h-3" />
-                  Take
+                  Claim
                 </div>
               )}
-              {isGod && (
+              {isLeader && (
+                <div className="flex items-center gap-1 px-3 py-1 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-700 font-display text-xs rounded transition-colors">
+                  <Swords className="w-3.5 h-3.5 rotate-180" />
+                  Unclaim Quest
+                </div>
+              )}
+              {isGod && quest.partyLeader != null && (
                 <div className="flex items-center gap-1 px-3 py-1 bg-parchment-foreground/10 hover:bg-parchment-foreground/20 text-parchment-foreground text-xs font-display rounded transition-colors">
                   <CheckCircle2 className="w-3 h-3" />
                   Complete

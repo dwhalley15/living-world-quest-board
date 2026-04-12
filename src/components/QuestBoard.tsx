@@ -23,14 +23,28 @@ export default function QuestBoard({
   >('unclaimed')
   const [createOpen, setCreateOpen] = useState(false)
 
-  const activeQuests = useMemo(
-    () => quests.filter((q) => !q.isCompleted),
-    [quests],
-  )
-  const completedQuests = useMemo(
-    () => quests.filter((q) => q.isCompleted),
-    [quests],
-  )
+  const { unclaimedQuests, inProgressQuests, completedQuests } = useMemo(() => {
+    const unclaimed: Quest[] = []
+    const inProgress: Quest[] = []
+    const completed: Quest[] = []
+
+    for (const q of quests) {
+      if (q.isCompleted) {
+        completed.push(q)
+      } else if (!q.partyLeader) {
+        unclaimed.push(q)
+      } else {
+        inProgress.push(q)
+      }
+    }
+
+    return {
+      unclaimedQuests: unclaimed,
+      inProgressQuests: inProgress,
+      completedQuests: completed,
+    }
+  }, [quests])
+
   const isGod = activeCharacter?.role === 'god'
 
   return (
@@ -47,10 +61,7 @@ export default function QuestBoard({
               }`}
             >
               <Scroll className="w-4 h-4" />
-              Unclaimed (
-              {activeQuests.length -
-                activeQuests.filter((q) => q.currentParty.length > 0).length}
-              )
+              Unclaimed ({unclaimedQuests.length})
             </button>
             <button
               onClick={() => setActiveTab('inProgress')}
@@ -61,10 +72,7 @@ export default function QuestBoard({
               }`}
             >
               <Swords className="w-4 h-4" />
-              In Progress (
-              {activeQuests.length &&
-                activeQuests.filter((q) => q.currentParty.length > 0).length}
-              )
+              In Progress ({inProgressQuests.length})
             </button>
             <button
               onClick={() => setActiveTab('completed')}
@@ -94,9 +102,9 @@ export default function QuestBoard({
         <QuestList
           quests={
             activeTab === 'unclaimed'
-              ? activeQuests.filter((q) => q.currentParty.length === 0)
+              ? unclaimedQuests
               : activeTab === 'inProgress'
-                ? activeQuests.filter((q) => q.currentParty.length > 0)
+                ? inProgressQuests
                 : completedQuests
           }
           activeCharacter={activeCharacter}

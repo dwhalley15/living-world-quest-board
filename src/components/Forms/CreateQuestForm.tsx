@@ -27,7 +27,6 @@ const createQuestFn = createServerFn({ method: 'POST' })
       creatorId: z.string(),
       rotation: z
         .number()
-        .int()
         .min(-2, 'Rotation must be between -2 and 2')
         .max(2, 'Rotation must be between -2 and 2'),
     }),

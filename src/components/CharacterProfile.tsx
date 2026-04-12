@@ -1,51 +1,13 @@
-import { useServerFn, createServerFn } from '@tanstack/react-start'
-import { z } from 'zod'
-import { useEffect, useState } from 'react'
 import type { Character } from '../types/character'
-import { getCharacterByName } from '#/server/db'
 import { Star, Swords, User } from 'lucide-react'
 
-const getCharacterProfileFn = createServerFn({ method: 'GET' })
-  .inputValidator(
-    z.object({
-      characterName: z.string().min(1),
-    }),
-  )
-  .handler(async ({ data }) => {
-    const character = await getCharacterByName(data.characterName)
-    return character
-  })
-
 export interface CharacterProfileProps {
-  characterName: string
+  character: Character
 }
 
 export default function CharacterProfile({
-  characterName,
+  character,
 }: CharacterProfileProps) {
-  const getCharacterProfile = useServerFn(getCharacterProfileFn)
-
-  const [character, setCharacter] = useState<Character | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    const fetchCharacter = async () => {
-      try {
-        setLoading(true)
-        const data = await getCharacterProfile({ data: { characterName } })
-        setCharacter(data)
-      } catch (err) {
-        console.error('Failed to fetch character', err)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchCharacter()
-  }, [characterName, getCharacterProfile])
-
-  if (loading) return <div className='p-6 text-center text-parchment-foreground/70 text-sm font-body'>Loading...</div>
-  if (!character) return <div className='p-6 text-center text-parchment-foreground/70 text-sm font-body'>Character not found</div>
 
   return (
     <div className="p-6 text-center">
@@ -56,6 +18,7 @@ export default function CharacterProfile({
                 <img
                   src={character.imageUrl}
                   alt={character.name}
+                  loading="lazy"
                   className="w-full h-full object-cover"
                 />
               ) : (
