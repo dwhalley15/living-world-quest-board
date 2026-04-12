@@ -51,12 +51,15 @@ export async function unclaimQuest(
     dateTime: updatedQuest.date_time,
     location: updatedQuest.location,
     partySize: updatedQuest.party_size,
+
     currentParty: updatedQuest.current_party ?? [],
+    partyLeader: updatedQuest.party_leader,
+
     isCompleted: updatedQuest.is_completed,
     completionMessage: updatedQuest.completion_message ?? undefined,
+
     createdBy: updatedQuest.created_by,
-    rotation: updatedQuest.rotation ?? 0,
     createdByName: updatedQuest.created_by_name ?? 'Unknown Adventurer',
-    partyLeader: null,
+    rotation: updatedQuest.rotation ?? 0,
   }
 }

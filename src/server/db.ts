@@ -3,6 +3,8 @@ import type { Character, CharacterWithPassword } from '../types/character'
 
 let client: ReturnType<typeof neon>
 
+type QuestRow = Record<string, any>
+
 export function getDb() {
   if (!process.env.DATABASE_URL) {
     throw new Error('DATABASE_URL is not set')
@@ -21,6 +23,13 @@ async function requireDb() {
     throw new Error('Database unavailable')
   }
   return db
+}
+
+function getDbRows(result: any): QuestRow[] {
+  if (!result) return []
+  if (Array.isArray(result?.rows)) return result.rows
+  if (Array.isArray(result)) return result
+  return []
 }
 
 export async function checkNameAvailable(name: string): Promise<boolean> {
@@ -473,50 +482,88 @@ export async function getQuestByIdFromDb(questId: string) {
   const result = await db.query(
     `
     SELECT
-  q.*,
-  creator.name AS created_by_name,
+      q.*,
+      creator.name AS created_by_name,
 
-  COALESCE(
-    json_agg(party_member.name)
-    FILTER (WHERE party_member.name IS NOT NULL),
-    '[]'
-  ) AS current_party,
+      leader.id AS leader_id,
+      leader.name AS leader_name,
+      leader.class AS leader_class,
+      leader.level AS leader_level,
+      leader.role AS leader_role,
+      leader.image_url AS leader_image_url,
 
-  json_build_object(
-    'id', leader.id,
-    'name', leader.name,
-    'class', leader.class,
-    'level', leader.level,
-    'role', leader.role,
-    'imageUrl', leader.image_url
-  ) AS party_leader
+      party_member.id AS party_member_id,
+      party_member.name AS party_member_name
 
-FROM quests q
+    FROM quests q
+    LEFT JOIN characters creator ON creator.id = q.created_by
+    LEFT JOIN characters leader ON leader.id = q.party_leader
+    LEFT JOIN quest_party qp ON qp.quest_id = q.id
+    LEFT JOIN characters party_member ON party_member.id = qp.character_id
 
-LEFT JOIN characters creator ON creator.id = q.created_by
-LEFT JOIN characters leader ON leader.id = q.party_leader
-LEFT JOIN quest_party qp ON qp.quest_id = q.id
-LEFT JOIN characters party_member ON party_member.id = qp.character_id
-
-WHERE q.id = $1
-
-GROUP BY q.id, creator.name, leader.id
+    WHERE q.id = $1
     `,
     [questId],
   )
 
-  let row: any = null
-  if (Array.isArray(result) && result.length > 0) {
-    row = result[0]
-  } else if (
-    result &&
-    'rows' in result &&
-    Array.isArray(result.rows) &&
-    result.rows.length > 0
-  ) {
-    row = result.rows[0]
+  const rows = getDbRows(result)
+  if (rows.length === 0) return null
+
+  const base = rows[0]
+
+  // -------------------------
+  // PARTY LEADER -> Character | null
+  // -------------------------
+  const partyLeader: Character | null = base.leader_id
+    ? {
+        id: base.leader_id,
+        name: base.leader_name,
+        class: base.leader_class,
+        level: base.leader_level,
+        role: base.leader_role,
+        imageUrl: base.leader_image_url,
+      }
+    : null
+
+  // -------------------------
+  // PARTY MEMBERS -> Character[]
+  // -------------------------
+  const memberMap = new Map<string, Character>()
+
+  for (const r of rows) {
+    if (!r.party_member_id) continue
+
+    memberMap.set(r.party_member_id, {
+      id: r.party_member_id,
+      name: r.party_member_name,
+      class: r.party_member_class,
+      level: r.party_member_level,
+      role: r.party_member_role,
+      imageUrl: r.party_member_image_url,
+    })
   }
-  return row
+
+  const currentParty: Character[] = Array.from(memberMap.values())
+
+  // -------------------------
+  // RETURN NORMALISED QUEST
+  // -------------------------
+  return {
+    id: base.id,
+    title: base.title,
+    description: base.description,
+    date_time: base.date_time,
+    location: base.location,
+    party_size: base.party_size,
+    is_completed: base.is_completed,
+    completion_message: base.completion_message,
+    created_by: base.created_by,
+    created_by_name: base.created_by_name ?? 'Unknown',
+    rotation: base.rotation ?? 0,
+
+    current_party: currentParty,
+    party_leader: partyLeader,
+  }
 }
 
 export async function markQuestAsCompletedInDb(

@@ -51,12 +51,15 @@ export async function completeQuest(
     dateTime: updatedQuest.date_time,
     location: updatedQuest.location,
     partySize: updatedQuest.party_size,
+
     currentParty: updatedQuest.current_party ?? [],
-    isCompleted: updatedQuest.is_completed,
-    completionMessage: updatedQuest.completion_message,
-    createdBy: updatedQuest.created_by,
-    rotation: updatedQuest.rotation ?? 0,
-    createdByName: updatedQuest.created_by_name ?? 'Unknown Adventurer',
     partyLeader: updatedQuest.party_leader,
+
+    isCompleted: updatedQuest.is_completed,
+    completionMessage: updatedQuest.completion_message ?? undefined,
+
+    createdBy: updatedQuest.created_by,
+    createdByName: updatedQuest.created_by_name ?? 'Unknown Adventurer',
+    rotation: updatedQuest.rotation ?? 0,
   }
 }
