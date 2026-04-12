@@ -23,24 +23,24 @@ export async function updateCharacter(
   // Validate session
   const sessionCharacterId = await getSession()
   if (!sessionCharacterId) {
-    return Promise.reject(new Error('Unauthorized: No active session found. Please log in to update your character.'))
+    throw new Error('Unauthorized: No active session found. Please log in to update a character.')
   }
 
   // Prevent editing another character
   if (sessionCharacterId !== data.id) {
-    return Promise.reject(new Error('Unauthorized: Character ID does not match active session. Please log in with the correct character to update.'))
+    throw new Error('Unauthorized: Session character ID does not match the character to be updated. Please log in with the correct character to update it.')
   }
 
   // Fetch the existing character from the database
   const existingCharacter = await getCharacterByIdWithPassword(data.id)
   if (!existingCharacter) {
-    return Promise.reject(new Error('Character not found. Please ensure the character ID is correct and try again.'))
+    throw new Error('Character not found. Please check the character ID and try again.')
   }
 
   // Check name availability (only if name changed)
   const available = await checkNameAvailable(data.name)
   if (!available && data.name !== existingCharacter.name) {
-    return Promise.reject(new Error('Character name is already taken. Please choose a different name.'))
+    throw new Error('Character name is already taken. Please choose a different name.')
   }
 
   // If a new image URL is provided and it's different from the existing one, delete the old image from blob storage
@@ -50,7 +50,7 @@ export async function updateCharacter(
   ) {
     const deleted = await deleteImageFromBlobStorage(existingCharacter.imageUrl)
     if (!deleted) {
-      return Promise.reject(new Error('Failed to delete old image from blob storage. Please try again.'))
+      throw new Error('Failed to delete old character image from storage. Please try again.')
     }
   }
 

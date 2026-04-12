@@ -11,21 +11,19 @@ export async function completeQuest(
     // Validate session and character
   const sessionCharacterId = await getSession()
   if (!sessionCharacterId || sessionCharacterId !== activeCharacterId) {
-    return Promise.reject(
-      new Error('Unauthorized: Character ID does not match active session.'),
-    )
+    throw new Error('Unauthorized: No valid session found for the character.')
   }
 
  // Check if quest is already completed
   const isCompleted = await getQuestByIdFromDb(questId)
   if (isCompleted?.is_completed) {
-    return Promise.reject(new Error('This quest has already been completed.'))
+    throw new Error('This quest has already been completed.')
   }
 
   // Check if character has god role
   const role = await getRoleById(activeCharacterId)
   if (!role || role.toLowerCase() !== 'god') {
-    return Promise.reject(new Error('Only gods can complete quests.'))
+    throw new Error('Only characters with the God role can complete quests.') 
   }
 
   // Mark quest as completed in the database
@@ -37,17 +35,13 @@ export async function completeQuest(
     completedDateTime,
   )
   if (!completedQuest) {
-    return Promise.reject(
-      new Error('Failed to complete quest. Please try again.'),
-    )
+    throw new Error('Failed to complete quest. Please try again.')
   }
 
   // Retrieve the updated quest from the database
   const updatedQuest = await getQuestByIdFromDb(questId)
   if (!updatedQuest) {
-    return Promise.reject(
-      new Error('Failed to retrieve updated quest. Please try again.'),
-    )
+    throw new Error('Failed to retrieve updated quest. Please try again.')
   }
 
   return {

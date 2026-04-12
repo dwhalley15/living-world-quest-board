@@ -57,7 +57,7 @@ export default function CompleteQuestForm({
       })
       setQuests((prevQuests) =>
         prevQuests.map((q) =>
-          q.id === quest.id ? { ...q, isCompleted: true, completionMessage: message } : q,
+          q.id === quest.id ? { ...q, isCompleted: true, completionMessage: message, dateTime: new Date().toISOString() } : q,
         ),
       )
     } catch (err) {

@@ -14,15 +14,13 @@ export async function unclaimQuest(
   // Validate session and character
   const sessionCharacterId = await getSession()
   if (!sessionCharacterId || sessionCharacterId !== activeCharacterId) {
-    return Promise.reject(
-      new Error('Unauthorized: Character ID does not match active session.'),
-    )
+    throw new Error('Unauthorized: No valid session found for the character.')
   }
 
   // Check if quest is already claimed
   const isQuestClaimed = await getQuestByIdFromDb(questId)
   if (!isQuestClaimed?.party_leader?.id) {
-    return Promise.reject(new Error('This quest is not currently claimed.'))
+    throw new Error('This quest is not currently claimed by any adventurer.')
   }
 
   // Check if the active character is the party leader of the quest
@@ -31,25 +29,19 @@ export async function unclaimQuest(
     activeCharacterId,
   )
   if (!unclaimed) {
-    return Promise.reject(
-      new Error('Failed to unclaim quest. Please try again.'),
-    )
+    throw new Error('Failed to unclaim quest. Please try again.')
   }
 
   // Remove all party members from the quest
   const removeParty = await removePartyFromQuestInDb(questId)
   if (!removeParty) {
-    return Promise.reject(
-      new Error('Failed to remove party from quest. Please try again.'),
-    )
+    throw new Error('Failed to remove party members from quest. Please try again.')
   }
 
   // Retrieve the updated quest from the database
   const updatedQuest = await getQuestByIdFromDb(questId)
   if (!updatedQuest) {
-    return Promise.reject(
-      new Error('Failed to retrieve updated quest. Please try again.'),
-    )
+    throw new Error('Failed to retrieve updated quest. Please try again.')
   }
 
   return {

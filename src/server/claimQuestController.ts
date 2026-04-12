@@ -1,4 +1,5 @@
 import type { Quest } from '#/types/quest';
+import { th } from 'zod/v4/locales';
 import { addPartyLeaderToQuestInDb, getQuestByIdFromDb } from './db'
 import { getSession } from './getSessionController';
 
@@ -7,25 +8,25 @@ export async function claimQuest(questId: string, characterId: string): Promise<
     // Validate session and character
     const sessionCharacterId = await getSession()
     if (!sessionCharacterId || sessionCharacterId !== characterId) {
-        return Promise.reject(new Error('Unauthorized: Character ID does not match active session.'))
+        throw new Error('Unauthorized: No valid session found for the character.')
     }
 
     // Check if quest is already claimed
     const isQuestClaimed = await getQuestByIdFromDb(questId)
     if (isQuestClaimed?.party_leader?.id) {
-        return Promise.reject(new Error('This quest has already been claimed by another adventurer. Please choose a different quest.'))
+        throw new Error('This quest has already been claimed by another adventurer.')
     }
 
     // Add party leader to quest in the database
     const questUpdated = await addPartyLeaderToQuestInDb(questId, characterId)  
     if (!questUpdated) {
-        return Promise.reject(new Error('Failed to claim quest. Please try again.'))
+        throw new Error('Failed to claim quest. Please try again.')
     }
 
     // Retrieve the updated quest from the database
     const updatedQuest = await getQuestByIdFromDb(questId)
     if(!updatedQuest){
-        return Promise.reject(new Error('Failed to retrieve updated quest. Please try again.'))
+        throw new Error('Failed to retrieve updated quest. Please try again.')
     }
 
     return {
