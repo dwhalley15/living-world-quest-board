@@ -87,7 +87,7 @@ export default function CreateQuestForm({
   }
 
   function getRotation() {
-    const rotations = [-2, -1.5, -1, 0, 1, 1.5, 2]
+    const rotations = [-2, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2]
     const index = Math.floor(Math.random() * rotations.length)
     return rotations[index]
   }

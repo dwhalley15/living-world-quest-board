@@ -15,6 +15,7 @@ import { useMemo, useState } from 'react'
 import Modal from './Modal'
 import CharacterProfile from './CharacterProfile'
 import { unclaimQuest } from '#/server/unclaimQuestController'
+import CompleteQuestForm from './Forms/CompleteQuestForm'
 
 const claimQuestFn = createServerFn({ method: 'POST' })
   .inputValidator(
@@ -53,6 +54,7 @@ export default function QuestView({
 }: QuestViewProps) {
   const [error, setError] = useState<string | null>(null)
   const [showCharacterModal, setShowCharacterModal] = useState(false)
+  const [showCompleteQuestModal, setShowCompleteQuestModal] = useState(false)
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(
     null,
   )
@@ -88,7 +90,6 @@ export default function QuestView({
       const result = await claimQuestServer({
         data: { questId: quest.id, activeCharacterId: activeCharacter.id },
       })
-
       if (!result.claimedQuest) {
         setError('Failed to claim quest. Please try again.')
         return
@@ -99,7 +100,6 @@ export default function QuestView({
       )
     } catch (err) {
       setError('Failed to claim quest. Please try again.')
-      return
     }
   }
 
@@ -262,7 +262,7 @@ export default function QuestView({
               {isGod && quest.partyLeader != null && (
                 <button
                   onClick={() => {
-                    /* Complete quest logic here */
+                    setShowCompleteQuestModal(true)
                   }}
                   className="flex items-center gap-1.5 px-4 py-2 bg-parchment-foreground/15 hover:bg-parchment-foreground/25 border border-parchment-foreground/30 text-parchment-foreground font-display text-sm rounded transition-colors"
                 >
@@ -284,6 +284,11 @@ export default function QuestView({
         {selectedCharacter && (
           <CharacterProfile character={selectedCharacter} />
         )}
+      </Modal>
+
+      <Modal title="Complete Quest" open={showCompleteQuestModal} onClose={() => setShowCompleteQuestModal(false)} size="sm"
+      >
+        <CompleteQuestForm quest={quest} activeCharacter={activeCharacter} setQuests={setQuests} />
       </Modal>
     </>
   )

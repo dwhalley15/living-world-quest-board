@@ -8,10 +8,11 @@ export async function createCharacter(data: {
   imageUrl?: string
   password: string
 }): Promise<{ id: string }> {
+  
   // Check if name is available
   const available = await checkNameAvailable(data.name)
   if (!available) {
-    throw new Error('Character name is already taken')
+    return Promise.reject(new Error('Character name is already taken. Please choose a different name.'))
   }
 
   // Hash password

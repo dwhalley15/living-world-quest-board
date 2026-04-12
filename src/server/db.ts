@@ -14,11 +14,16 @@ export async function getDb() {
   return client
 }
 
-export async function checkNameAvailable(name: string): Promise<boolean> {
+async function requireDb() {
   const db = await getDb()
   if (!db) {
-    throw new Error('Database connection not available')
+    throw new Error('Database unavailable')
   }
+  return db
+}
+
+export async function checkNameAvailable(name: string): Promise<boolean> {
+  const db = await requireDb()
   const result = await db.query(
     'SELECT COUNT(*) AS count FROM characters WHERE name = $1',
     [name],
@@ -45,10 +50,7 @@ export async function insertCharacter(character: {
   imageUrl?: string
   passwordHash: string
 }) {
-  const db = await getDb()
-  if (!db) {
-    throw new Error('Database connection not available')
-  }
+  const db = await requireDb()
   const result = await db.query(
     'INSERT INTO characters (name, class, level, image_url, password_hash) VALUES ($1, $2, $3, $4, $5) RETURNING *',
     [
@@ -77,10 +79,7 @@ export async function insertSession(data: {
   sessionToken: string
   expiresAt: Date
 }) {
-  const db = await getDb()
-  if (!db) {
-    throw new Error('Database connection not available')
-  }
+  const db = await requireDb()
   const result = await db.query(
     'INSERT INTO character_sessions (character_id, session_token, expires_at) VALUES ($1, $2, $3) RETURNING *',
     [data.characterId, data.sessionToken, data.expiresAt],
@@ -99,8 +98,7 @@ export async function insertSession(data: {
 }
 
 export async function getSessionByToken(token: string): Promise<string | null> {
-  const db = await getDb()
-  if (!db) throw new Error('Database connection not available')
+  const db = await requireDb()
 
   const result = await db.query(
     `
@@ -126,10 +124,7 @@ export async function getSessionByToken(token: string): Promise<string | null> {
 }
 
 export async function getCharacterById(id: string): Promise<Character | null> {
-  const db = await getDb()
-  if (!db) {
-    throw new Error('Database connection not available')
-  }
+  const db = await requireDb()
   const result = await db.query(
     `
     SELECT id, name, class, level, image_url, role
@@ -163,10 +158,7 @@ export async function getCharacterById(id: string): Promise<Character | null> {
 export async function getCharacterByIdWithPassword(
   id: string,
 ): Promise<CharacterWithPassword | null> {
-  const db = await getDb()
-  if (!db) {
-    throw new Error('Database connection not available')
-  }
+  const db = await requireDb()
   const result = await db.query(
     `
     SELECT id, name, class, level, image_url, password_hash, role
@@ -199,10 +191,7 @@ export async function getCharacterByIdWithPassword(
 }
 
 export async function deleteSessionByToken(token: string) {
-  const db = await getDb()
-  if (!db) {
-    throw new Error('Database connection not available')
-  }
+  const db = await requireDb()
   await db.query('DELETE FROM character_sessions WHERE session_token = $1', [
     token,
   ])
@@ -211,10 +200,7 @@ export async function deleteSessionByToken(token: string) {
 export async function getCharacterByName(
   name: string,
 ): Promise<CharacterWithPassword | null> {
-  const db = await getDb()
-  if (!db) {
-    throw new Error('Database connection not available')
-  }
+  const db = await requireDb()
   const result = await db.query(
     `
     SELECT id, name, class, level, image_url, password_hash, role
@@ -249,10 +235,7 @@ export async function getCharacterByName(
 export async function saveCharacter(
   character: CharacterWithPassword,
 ): Promise<Character> {
-  const db = await getDb()
-  if (!db) {
-    throw new Error('Database connection not available')
-  }
+  const db = await requireDb()
   const result = await db.query(
     `
     UPDATE characters
@@ -292,10 +275,7 @@ export async function saveCharacter(
 }
 
 export async function deleteCharacterFromDb(id: string): Promise<boolean> {
-  const db = await getDb()
-  if (!db) {
-    throw new Error('Database connection not available')
-  }
+  const db = await requireDb()
   await db.query('DELETE FROM characters WHERE id = $1', [id])
   return true
 }
@@ -354,20 +334,14 @@ ORDER BY q.created_at DESC
 }
 
 export async function deleteSessionsByCharacterId(characterId: string) {
-  const db = await getDb()
-  if (!db) {
-    throw new Error('Database connection not available')
-  }
+  const db = await requireDb()
   await db.query('DELETE FROM character_sessions WHERE character_id = $1', [
     characterId,
   ])
 }
 
 export async function getRoleById(characterId: string): Promise<string | null> {
-  const db = await getDb()
-  if (!db) {
-    throw new Error('Database connection not available')
-  }
+  const db = await requireDb()
   const result = await db.query('SELECT role FROM characters WHERE id = $1', [
     characterId,
   ])
@@ -394,10 +368,7 @@ export async function insertQuestToDb(data: {
   creatorId: string
   rotation: number
 }) {
-  const db = await getDb()
-  if (!db) {
-    throw new Error('Database connection not available')
-  }
+  const db = await requireDb()
   const result = await db.query(
     `
     INSERT INTO quests (title, description, date_time, party_size, location, created_by, rotation)
@@ -444,10 +415,7 @@ export async function insertQuestToDb(data: {
 }
 
 export async function getCharacterNameById(id: string): Promise<string | null> {
-  const db = await getDb()
-  if (!db) {
-    throw new Error('Database connection not available')
-  }
+  const db = await requireDb()
   const result = await db.query('SELECT name FROM characters WHERE id = $1', [
     id,
   ])
@@ -469,8 +437,7 @@ export async function addPartyLeaderToQuestInDb(
   questId: string,
   characterId: string,
 ) {
-  const db = await getDb()
-  if (!db) throw new Error('Database connection not available')
+  const db = await requireDb()
 
   await db.query('UPDATE quests SET party_leader = $1 WHERE id = $2', [
     characterId,
@@ -484,8 +451,7 @@ export async function removePartyLeaderFromQuestInDb(
   questId: string,
   characterId: string,
 ) {
-  const db = await getDb()
-  if (!db) throw new Error('Database connection not available')
+  const db = await requireDb()
   await db.query(
     'UPDATE quests SET party_leader = NULL WHERE id = $1 AND party_leader = $2',
     [questId, characterId],
@@ -494,9 +460,14 @@ export async function removePartyLeaderFromQuestInDb(
   return true
 }
 
+export async function removePartyFromQuestInDb(questId: string) {
+  const db = await requireDb()
+  await db.query('DELETE FROM quest_party WHERE quest_id = $1', [questId])
+  return true
+}
+
 export async function getQuestByIdFromDb(questId: string) {
-  const db = await getDb()
-  if (!db) throw new Error('Database connection not available')
+  const db = await requireDb()
 
   const result = await db.query(
     `
@@ -533,6 +504,37 @@ GROUP BY q.id, creator.name, leader.id
     [questId],
   )
 
+  let row: any = null
+  if (Array.isArray(result) && result.length > 0) {
+    row = result[0]
+  } else if (
+    result &&
+    'rows' in result &&
+    Array.isArray(result.rows) &&
+    result.rows.length > 0
+  ) {
+    row = result.rows[0]
+  }
+  return row
+}
+
+export async function markQuestAsCompletedInDb(
+  questId: string,
+  characterId: string,
+  completedMessage: string,
+  completedDateTime: string,
+) {
+  const db = await requireDb()
+
+  const result = await db.query(
+    `
+    UPDATE quests
+    SET is_completed = TRUE, completion_message = $1, date_time = $2
+    WHERE id = $3 AND party_leader = $4
+    RETURNING *
+    `,
+    [completedMessage, completedDateTime, questId, characterId],
+  )
   let row: any = null
   if (Array.isArray(result) && result.length > 0) {
     row = result[0]

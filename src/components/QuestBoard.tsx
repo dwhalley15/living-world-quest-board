@@ -50,8 +50,22 @@ export default function QuestBoard({
   return (
     <>
       <section>
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex gap-1 bg-secondary/50 backdrop-blur-sm rounded p-1">
+
+        {isGod && (
+          <div className='flex items-end justify-end mb-6'>
+            <motion.button
+              onClick={() => setCreateOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-primary/20 hover:bg-primary/30 border border-primary/30 text-primary font-display text-sm rounded transition-colors"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Plus className="w-4 h-4" />
+              Post Quest
+            </motion.button>
+            </div>
+          )}
+        <div className="flex items-center justify-between mb-6"> 
+          <div className="grid grid-cols-2 w-full sm:flex gap-1 bg-secondary/50 backdrop-blur-sm rounded p-1 sm:w-auto">
             <button
               onClick={() => setActiveTab('unclaimed')}
               className={`flex items-center gap-1.5 px-4 py-2 rounded text-sm font-display transition-colors ${
@@ -86,18 +100,6 @@ export default function QuestBoard({
               Completed ({completedQuests.length})
             </button>
           </div>
-
-          {isGod && (
-            <motion.button
-              onClick={() => setCreateOpen(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-primary/20 hover:bg-primary/30 border border-primary/30 text-primary font-display text-sm rounded transition-colors"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Plus className="w-4 h-4" />
-              Post Quest
-            </motion.button>
-          )}
         </div>
         <QuestList
           quests={

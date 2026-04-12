@@ -1,17 +1,14 @@
+import { getQuestByIdFromDb, getRoleById, markQuestAsCompletedInDb } from './db'
 import type { Quest } from '#/types/quest'
-import {
-  getQuestByIdFromDb,
-  removePartyLeaderFromQuestInDb,
-  removePartyFromQuestInDb,
-} from './db'
 import { getSession } from './getSessionController'
 
-export async function unclaimQuest(
+export async function completeQuest(
   questId: string,
   activeCharacterId: string,
+  completedMessage: string,
 ): Promise<Quest> {
 
-  // Validate session and character
+    // Validate session and character
   const sessionCharacterId = await getSession()
   if (!sessionCharacterId || sessionCharacterId !== activeCharacterId) {
     return Promise.reject(
@@ -19,28 +16,29 @@ export async function unclaimQuest(
     )
   }
 
-  // Check if quest is already claimed
-  const isQuestClaimed = await getQuestByIdFromDb(questId)
-  if (!isQuestClaimed?.party_leader?.id) {
-    return Promise.reject(new Error('This quest is not currently claimed.'))
+ // Check if quest is already completed
+  const isCompleted = await getQuestByIdFromDb(questId)
+  if (isCompleted?.is_completed) {
+    return Promise.reject(new Error('This quest has already been completed.'))
   }
 
-  // Check if the active character is the party leader of the quest
-  const unclaimed = await removePartyLeaderFromQuestInDb(
+  // Check if character has god role
+  const role = await getRoleById(activeCharacterId)
+  if (!role || role.toLowerCase() !== 'god') {
+    return Promise.reject(new Error('Only gods can complete quests.'))
+  }
+
+  // Mark quest as completed in the database
+  const completedDateTime = new Date().toISOString()
+  const completedQuest = await markQuestAsCompletedInDb(
     questId,
     activeCharacterId,
+    completedMessage,
+    completedDateTime,
   )
-  if (!unclaimed) {
+  if (!completedQuest) {
     return Promise.reject(
-      new Error('Failed to unclaim quest. Please try again.'),
-    )
-  }
-
-  // Remove all party members from the quest
-  const removeParty = await removePartyFromQuestInDb(questId)
-  if (!removeParty) {
-    return Promise.reject(
-      new Error('Failed to remove party from quest. Please try again.'),
+      new Error('Failed to complete quest. Please try again.'),
     )
   }
 
@@ -61,10 +59,10 @@ export async function unclaimQuest(
     partySize: updatedQuest.party_size,
     currentParty: updatedQuest.current_party ?? [],
     isCompleted: updatedQuest.is_completed,
-    completionMessage: updatedQuest.completion_message ?? undefined,
+    completionMessage: updatedQuest.completion_message,
     createdBy: updatedQuest.created_by,
     rotation: updatedQuest.rotation ?? 0,
     createdByName: updatedQuest.created_by_name ?? 'Unknown Adventurer',
-    partyLeader: null,
+    partyLeader: updatedQuest.party_leader,
   }
 }

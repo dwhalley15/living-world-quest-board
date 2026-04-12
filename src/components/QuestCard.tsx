@@ -25,7 +25,6 @@ export default function QuestCard({
   setQuests,
 }: QuestCardProps) {
   const [modalOpen, setModalOpen] = useState(false)
-  const hasParty = quest.currentParty.length > 0
   const formattedDate = new Date(quest.dateTime).toLocaleDateString('en-US', {
     weekday: 'short',
     month: 'short',
