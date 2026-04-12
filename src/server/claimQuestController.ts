@@ -1,5 +1,4 @@
 import type { Quest } from '#/types/quest';
-import { th } from 'zod/v4/locales';
 import { addPartyLeaderToQuestInDb, getQuestByIdFromDb } from './db'
 import { getSession } from './getSessionController';
 

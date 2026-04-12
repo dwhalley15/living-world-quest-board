@@ -48,16 +48,20 @@ export default function CompleteQuestForm({
       return
     }
     try {
-      await completeQuestMutation({
+      const result = await completeQuestMutation({
         data: {
           questId: quest.id,
           activeCharacterId: activeCharacter.id,
           completedMessage: message,
         },
       })
+      if (!result.completedQuest) {
+        setError('Failed to complete quest.')
+        return
+      }
       setQuests((prevQuests) =>
         prevQuests.map((q) =>
-          q.id === quest.id ? { ...q, isCompleted: true, completionMessage: message, dateTime: new Date().toISOString() } : q,
+          q.id === quest.id ? { ...q, ...result.completedQuest } : q,
         ),
       )
     } catch (err) {

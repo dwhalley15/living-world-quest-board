@@ -3,14 +3,15 @@ import type { Character, CharacterWithPassword } from '../types/character'
 
 let client: ReturnType<typeof neon>
 
-// Database helper functions
-export async function getDb() {
+export function getDb() {
   if (!process.env.DATABASE_URL) {
-    return undefined
+    throw new Error('DATABASE_URL is not set')
   }
+
   if (!client) {
-    client = await neon(process.env.DATABASE_URL!)
+    client = neon(process.env.DATABASE_URL)
   }
+
   return client
 }
 
