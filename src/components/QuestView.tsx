@@ -25,8 +25,12 @@ const claimQuestFn = createServerFn({ method: 'POST' })
     }),
   )
   .handler(async ({ data }) => {
+    try{
     const claimedQuest = await claimQuest(data.questId, data.activeCharacterId)
     return { success: true, claimedQuest }
+    } catch (err: any) {
+      return { success: false, message: err.message }
+    }
   })
 
   const unclaimQuestFn = createServerFn({ method: 'POST' })
@@ -37,8 +41,12 @@ const claimQuestFn = createServerFn({ method: 'POST' })
     }),
   )
   .handler(async ({ data }) => {
+    try {
     const quest = await unclaimQuest(data.questId, data.activeCharacterId)
     return { success: true, quest }
+    } catch (err: any) {
+      return { success: false, message: err.message }
+    }
   })
 
 interface QuestViewProps {
@@ -90,7 +98,7 @@ export default function QuestView({
       const result = await claimQuestServer({
         data: { questId: quest.id, activeCharacterId: activeCharacter.id },
       })
-      if (!result.claimedQuest) {
+      if (!result.success && !result.claimedQuest) {
         setError('Failed to claim quest. Please try again.')
         return
       }
@@ -114,7 +122,7 @@ export default function QuestView({
       },
     })
 
-    if (!result.quest) {
+    if (!result.success && !result.quest) {
       setError('Failed to unclaim quest.')
       return
     }

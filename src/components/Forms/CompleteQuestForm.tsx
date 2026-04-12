@@ -14,12 +14,16 @@ const completeQuestFn = createServerFn({ method: 'POST' })
     }),
   )
   .handler(async ({ data }) => {
-    const completedQuest = await completeQuest(
-      data.questId,
-      data.activeCharacterId,
-      data.completedMessage,
-    )
-    return { success: true, completedQuest }
+    try {
+      const completedQuest = await completeQuest(
+        data.questId,
+        data.activeCharacterId,
+        data.completedMessage,
+      )
+      return { success: true, completedQuest }
+    } catch (err: any) {
+      return { success: false, message: err.message }
+    }
   })
 
 interface CompleteQuestFormProps {
@@ -55,7 +59,7 @@ export default function CompleteQuestForm({
           completedMessage: message,
         },
       })
-      if (!result.completedQuest) {
+      if (!result.success && !result.completedQuest) {
         setError('Failed to complete quest.')
         return
       }
