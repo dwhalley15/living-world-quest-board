@@ -596,3 +596,36 @@ export async function markQuestAsCompletedInDb(
   }
   return row
 }
+
+export async function updateQuestInDb(data: {
+  id: string
+  title: string
+  description: string
+  partySize: number
+  location: string
+}) {
+  const db = await requireDb()
+
+  const result = await db.query(
+    `
+    UPDATE quests
+    SET title = $1, description = $2, party_size = $3, location = $4
+    WHERE id = $5
+    RETURNING *
+    `,
+    [data.title, data.description, data.partySize, data.location, data.id],
+  )
+
+  let row: any = null
+  if (Array.isArray(result) && result.length > 0) {
+    row = result[0]
+  } else if (
+    result &&
+    'rows' in result &&
+    Array.isArray(result.rows) &&
+    result.rows.length > 0
+  ) {
+    row = result.rows[0]
+  }
+  return row
+}
