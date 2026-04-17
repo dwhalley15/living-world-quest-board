@@ -320,13 +320,15 @@ export default function EditCharacterForm({
                   setDeleteConfirmOpen(false)
                 }}
                 className="px-3 py-1.5 border border-red-500/40 rounded text-sm text-red-500 hover:bg-red-500/10"
+                disabled={loading}
               >
-                Yes, Delete
+                {loading ? 'Deleting...' : 'Yes, Delete'}
               </button>
 
               <button
                 onClick={() => setDeleteConfirmOpen(false)}
                 className="px-3 py-1.5 border border-red-500/40 rounded text-sm text-red-500 hover:bg-red-500/10"
+                disabled={loading}
               >
                 Cancel
               </button>

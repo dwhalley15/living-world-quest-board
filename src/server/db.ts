@@ -629,3 +629,9 @@ export async function updateQuestInDb(data: {
   }
   return row
 }
+
+export async function deleteQuestFromDb(questId: string) {
+  const db = await requireDb()
+  await db.query('DELETE FROM quests WHERE id = $1', [questId])
+  return true
+}
