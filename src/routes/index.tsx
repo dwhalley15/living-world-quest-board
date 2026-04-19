@@ -12,13 +12,18 @@ import { getCharacterById } from '../server/db'
 import EditCharacterForm from '../components/Forms/UpdateCharacterForm'
 import QuestBoard from '../components/QuestBoard'
 import { getQuests } from '../server/getQuestsController'
+import { getCharacters } from '../server/getCharactersController'
 
 const sessionLoader = createServerFn({ method: 'GET' }).handler(() => {
   return getSession()
 })
 
 const questLoader = createServerFn({ method: 'GET' }).handler(async () => {
-    return getQuests()
+  return getQuests()
+})
+
+const charactersLoader = createServerFn({ method: 'GET' }).handler(async () => {
+  return getCharacters()
 })
 
 export const Route = createFileRoute('/')({
@@ -31,30 +36,38 @@ export const Route = createFileRoute('/')({
       activeCharacter = characterData
     }
     const quests = await questLoader()
-    return { activeCharacter, quests }
+    const characters = await charactersLoader()
+    return { activeCharacter, quests, characters }
   },
 })
 
-
 function App() {
   const loaderData = Route.useLoaderData()
-  const [activeCharacter, setActiveCharacter] = useState(loaderData.activeCharacter)
+  const [activeCharacter, setActiveCharacter] = useState(
+    loaderData.activeCharacter,
+  )
   const [editProfileOpen, setEditProfileOpen] = useState(false)
   const [loginOpen, setLoginOpen] = useState(false)
   const [charCreateOpen, setCharCreateOpen] = useState(false)
   const [quests, setQuests] = useState(loaderData.quests)
+  const [characters, setCharacters] = useState(loaderData.characters)
 
   return (
     <main className="relative z-10 max-w-6xl mx-auto px-4 py-8">
       <CharacterBar
         activeCharacter={activeCharacter}
-        setActiveCharacter={setActiveCharacter} 
+        setActiveCharacter={setActiveCharacter}
         editCharacterProfile={setEditProfileOpen}
         setLoginOpen={setLoginOpen}
         setCharCreateOpen={setCharCreateOpen}
       />
 
-      <QuestBoard activeCharacter={activeCharacter} quests={quests} setQuests={setQuests} />
+      <QuestBoard
+        activeCharacter={activeCharacter}
+        quests={quests}
+        setQuests={setQuests}
+        characters={characters}
+      />
 
       <Modal
         open={editProfileOpen}
@@ -68,6 +81,13 @@ function App() {
             onSuccess={async (character) => {
               setEditProfileOpen(false)
               setActiveCharacter(character)
+              if (!character) {
+                return
+              } else {
+                setCharacters((prev) =>
+                  prev.map((c) => (c.id === character.id ? character : c)),
+                )
+              }
             }}
           />
         )}
@@ -80,7 +100,7 @@ function App() {
         icon={LogIn}
         size="sm"
       >
-        <CharacterLoginForm 
+        <CharacterLoginForm
           onSuccess={async (character) => {
             setLoginOpen(false)
             setActiveCharacter(character)
@@ -99,6 +119,7 @@ function App() {
           onSuccess={async (character) => {
             setCharCreateOpen(false)
             setActiveCharacter(character)
+            setCharacters((prev) => [...prev, character])
           }}
         />
       </Modal>

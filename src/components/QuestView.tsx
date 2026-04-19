@@ -7,6 +7,7 @@ import {
   MapPin,
   Swords,
   User,
+  UserPlus,
 } from 'lucide-react'
 import { useServerFn, createServerFn } from '@tanstack/react-start'
 import { z } from 'zod'
@@ -16,6 +17,7 @@ import Modal from './Modal'
 import CharacterProfile from './CharacterProfile'
 import { unclaimQuest } from '#/server/unclaimQuestController'
 import CompleteQuestForm from './Forms/CompleteQuestForm'
+import AddToPartyList from './AddToPartyList'
 
 const claimQuestFn = createServerFn({ method: 'POST' })
   .inputValidator(
@@ -25,15 +27,18 @@ const claimQuestFn = createServerFn({ method: 'POST' })
     }),
   )
   .handler(async ({ data }) => {
-    try{
-    const claimedQuest = await claimQuest(data.questId, data.activeCharacterId)
-    return { success: true, claimedQuest }
+    try {
+      const claimedQuest = await claimQuest(
+        data.questId,
+        data.activeCharacterId,
+      )
+      return { success: true, claimedQuest }
     } catch (err: any) {
       return { success: false, message: err.message }
     }
   })
 
-  const unclaimQuestFn = createServerFn({ method: 'POST' })
+const unclaimQuestFn = createServerFn({ method: 'POST' })
   .inputValidator(
     z.object({
       questId: z.string().min(1),
@@ -42,8 +47,8 @@ const claimQuestFn = createServerFn({ method: 'POST' })
   )
   .handler(async ({ data }) => {
     try {
-    const quest = await unclaimQuest(data.questId, data.activeCharacterId)
-    return { success: true, quest }
+      const quest = await unclaimQuest(data.questId, data.activeCharacterId)
+      return { success: true, quest }
     } catch (err: any) {
       return { success: false, message: err.message }
     }
@@ -53,16 +58,19 @@ interface QuestViewProps {
   quest: Quest
   activeCharacter: Character | null
   setQuests: React.Dispatch<React.SetStateAction<Quest[]>>
+  characters: Character[]
 }
 
 export default function QuestView({
   quest,
   activeCharacter,
   setQuests,
+  characters
 }: QuestViewProps) {
   const [error, setError] = useState<string | null>(null)
   const [showCharacterModal, setShowCharacterModal] = useState(false)
   const [showCompleteQuestModal, setShowCompleteQuestModal] = useState(false)
+  const [showAddToPartyModal, setShowAddToPartyModal] = useState(false)
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(
     null,
   )
@@ -112,28 +120,28 @@ export default function QuestView({
   }
 
   const unclaimQuest = async () => {
-  if (!activeCharacter) return
+    if (!activeCharacter) return
 
-  try {
-    const result = await unclaimQuestServer({
-      data: {
-        questId: quest.id,
-        activeCharacterId: activeCharacter.id,
-      },
-    })
+    try {
+      const result = await unclaimQuestServer({
+        data: {
+          questId: quest.id,
+          activeCharacterId: activeCharacter.id,
+        },
+      })
 
-    if (!result.success && !result.quest) {
+      if (!result.success && !result.quest) {
+        setError('Failed to unclaim quest.')
+        return
+      }
+
+      setQuests((prev) =>
+        prev.map((q) => (q.id === quest.id ? result.quest : q)),
+      )
+    } catch {
       setError('Failed to unclaim quest.')
-      return
     }
-
-    setQuests((prev) =>
-      prev.map((q) => (q.id === quest.id ? result.quest : q)),
-    )
-  } catch {
-    setError('Failed to unclaim quest.')
   }
-}
 
   return (
     <>
@@ -211,6 +219,15 @@ export default function QuestView({
                 {member.name}
               </button>
             ))}
+            {fullParty < quest.partySize && isLeader && !quest.isCompleted && isClaimed && (
+              <button
+                onClick={() => setShowAddToPartyModal(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-parchment-foreground/10 hover:bg-parchment-foreground/20 rounded text-parchment-foreground text-xs font-display transition-colors cursor-pointer"
+              >
+                <UserPlus className="w-3 h-3" />
+                Add Adventurer
+              </button>
+            )}
             {fullParty === 0 && (
               <p className="text-xs italic text-parchment-foreground/40 font-body">
                 No adventurers have claimed this quest yet...
@@ -290,13 +307,37 @@ export default function QuestView({
         size="sm"
       >
         {selectedCharacter && (
-          <CharacterProfile character={selectedCharacter} />
+          <CharacterProfile character={selectedCharacter} quest={quest} activeCharacter={activeCharacter} setQuests={setQuests} setShowCharacterModal={setShowCharacterModal} />
         )}
       </Modal>
 
-      <Modal title="Complete Quest" open={showCompleteQuestModal} onClose={() => setShowCompleteQuestModal(false)} size="sm"
+      <Modal
+        title="Complete Quest"
+        open={showCompleteQuestModal}
+        onClose={() => setShowCompleteQuestModal(false)}
+        size="sm"
       >
-        <CompleteQuestForm quest={quest} activeCharacter={activeCharacter} setQuests={setQuests} />
+        <CompleteQuestForm
+          quest={quest}
+          activeCharacter={activeCharacter}
+          setQuests={setQuests}
+        />
+      </Modal>
+
+      <Modal
+        title="Add to Party"
+        icon={UserPlus}
+        open={showAddToPartyModal}
+        onClose={() => setShowAddToPartyModal(false)}
+        size="sm"
+      >
+        <AddToPartyList
+          quest={quest}
+          activeCharacter={activeCharacter}
+          setQuests={setQuests}
+          characters={characters}
+          setShowAddToPartyModal={setShowAddToPartyModal}
+        />
       </Modal>
     </>
   )

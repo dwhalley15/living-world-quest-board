@@ -17,12 +17,14 @@ interface QuestCardProps {
   quest: Quest
   activeCharacter: Character | null
   setQuests: React.Dispatch<React.SetStateAction<Quest[]>>
+  characters: Character[]
 }
 
 export default function QuestCard({
   quest,
   activeCharacter,
   setQuests,
+  characters
 }: QuestCardProps) {
   const [modalOpen, setModalOpen] = useState(false)
   const formattedDate = new Date(quest.dateTime).toLocaleDateString('en-US', {
@@ -145,6 +147,7 @@ export default function QuestCard({
           quest={quest}
           activeCharacter={activeCharacter}
           setQuests={setQuests}
+          characters={characters}
         />
       </Modal>
     </>

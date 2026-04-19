@@ -147,10 +147,11 @@ export default function UpdateQuestForm({
   return (
     <>
       <button
-        className="text-parchment-foreground/50 hover:text-parchment-foreground transition-colors"
+        className="flex items-center gap-1 text-parchment-foreground/50 hover:text-parchment-foreground transition-colors"
         onClick={() => setEditing(false)}
       >
         <XCircle className="w-4 h-4" />
+        Cancel
       </button>
       <form className="mt-4 space-y-4" onSubmit={handleSubmit}>
         <div>

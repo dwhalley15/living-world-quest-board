@@ -1,5 +1,5 @@
 import { getSession } from './getSessionController'
-import { deleteCharacterFromDb, getCharacterById } from './db'
+import { deleteCharacterFromDb, getCharacterById, getQuestsByCharacterId, removePartyFromQuestInDb } from './db'
 import { destroySession } from './destroySessionController'
 import { deleteImageFromBlobStorage } from './imageRemover'
 
@@ -27,6 +27,19 @@ export async function deleteCharacter(id: string) {
       const deleted = await deleteImageFromBlobStorage(character.imageUrl)
       if (!deleted) {
         throw new Error('Failed to delete character image from storage. Please try again.')
+      }
+    }
+
+    // Get all quests the character has claimed
+    const quests = await getQuestsByCharacterId(id)
+
+    // Remove party members from all quests the character is in
+    if (quests.length > 0) {
+      for (const quest of quests) {
+        const removeParty = await removePartyFromQuestInDb(quest.id)
+        if (!removeParty) {
+          throw new Error(`Failed to remove character from quest ${quest.title}. Please try again.`)
+        }
       }
     }
 

@@ -1,9 +1,12 @@
 import { neon } from '@neondatabase/serverless'
 import type { Character, CharacterWithPassword } from '../types/character'
+import type { Quest } from '#/types/quest'
 
 let client: ReturnType<typeof neon>
 
 type QuestRow = Record<string, any>
+
+type AddPartyResult = 'added' | 'already_exists'
 
 export function getDb() {
   if (!process.env.DATABASE_URL) {
@@ -634,4 +637,77 @@ export async function deleteQuestFromDb(questId: string) {
   const db = await requireDb()
   await db.query('DELETE FROM quests WHERE id = $1', [questId])
   return true
+}
+
+export async function getCharactersFromDb() {
+  const db = await requireDb()
+  const result = await db.query(
+    `
+    SELECT id, name, class, level, role, image_url
+    FROM characters
+    ORDER BY name ASC
+    `,
+  )
+  if (Array.isArray(result)) return result
+  if (result && 'rows' in result) return result.rows
+  return []
+}
+
+export async function addCharacterToQuestPartyInDb(
+  questId: string,
+  characterId: string,
+): Promise<AddPartyResult> {
+  const db = await requireDb()
+
+  const result = await db.query(
+    `INSERT INTO quest_party (quest_id, character_id)
+     VALUES ($1, $2)
+     ON CONFLICT DO NOTHING
+     RETURNING character_id`,
+    [questId, characterId],
+  )
+
+  // Normalize result into array form
+  const rows = Array.isArray(result)
+    ? result
+    : result && typeof result === 'object' && 'rows' in result
+      ? result.rows
+      : []
+
+  return rows.length > 0 ? 'added' : 'already_exists'
+}
+
+export async function removeCharacterFromQuestPartyInDb(
+  questId: string,
+  characterId: string,
+): Promise<boolean> {
+  const db = await requireDb()
+  await db.query(
+    `DELETE FROM quest_party WHERE quest_id = $1 AND character_id = $2`,
+    [questId, characterId],
+  )
+  return true
+}
+
+
+export async function getQuestsByCharacterId(characterId: string): Promise<Quest[]> {
+  const db = await requireDb()
+  const result = await db.query(
+    `
+    SELECT * FROM quests WHERE party_leader = $1
+    `,
+    [characterId],
+  )
+
+  if (result && typeof result === 'object' && 'rows' in result && Array.isArray(result.rows)) {
+    return result.rows as Quest[]
+  }
+
+  if (Array.isArray(result)) {
+    if (result.length > 0 && Array.isArray(result[0])) {
+      return []
+    }
+    return result as Quest[]
+  }
+  return []
 }

@@ -11,12 +11,14 @@ interface QuestBoardProps {
   activeCharacter: Character | null
   setQuests: React.Dispatch<React.SetStateAction<Quest[]>>
   quests: Quest[]
+  characters: Character[]
 }
 
 export default function QuestBoard({
   activeCharacter,
   quests,
   setQuests,
+  characters
 }: QuestBoardProps) {
   const [activeTab, setActiveTab] = useState<
     'unclaimed' | 'inProgress' | 'completed'
@@ -111,6 +113,7 @@ export default function QuestBoard({
           }
           activeCharacter={activeCharacter}
           setQuests={setQuests}
+          characters={characters}
         />
       </section>
 

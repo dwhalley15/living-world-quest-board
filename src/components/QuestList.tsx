@@ -7,12 +7,14 @@ interface QuestListProps {
   quests: Quest[]
   activeCharacter: Character | null
   setQuests: React.Dispatch<React.SetStateAction<Quest[]>>
+  characters: Character[]
 }
 
 export default function QuestList({
   quests,
   activeCharacter,
   setQuests,
+  characters
 }: QuestListProps) {
   if (quests.length === 0) {
     return (
@@ -47,6 +49,7 @@ export default function QuestList({
               quest={quest}
               activeCharacter={activeCharacter}
               setQuests={setQuests}
+              characters={characters}
             />
           </motion.div>
         ))}

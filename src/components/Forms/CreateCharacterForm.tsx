@@ -53,7 +53,7 @@ const autoLoginFn = createServerFn({ method: 'POST' })
 
 // This component is responsible for rendering the character creation form, handling user input, uploading the character portrait, and communicating with the server to create the character and log them in.
 export default function CreateCharacterForm({
-  onSuccess,
+  onSuccess
 }: CreateCharacterFormProps) {
   const [name, setName] = useState('')
   const [charClass, setCharClass] = useState<

@@ -9,12 +9,14 @@ interface QuestDetailsProps {
   quest: Quest
   activeCharacter: Character | null
   setQuests: React.Dispatch<React.SetStateAction<Quest[]>>
+  characters: Character[]
 }
 
 export default function QuestDetails({
   quest,
   activeCharacter,
   setQuests,
+  characters
 }: QuestDetailsProps) {
   const [editing, setEditing] = useState(false)
 
@@ -25,9 +27,10 @@ export default function QuestDetails({
       {!quest.isCompleted && !editing && isGod && (
         <button
           onClick={() => setEditing(true)}
-          className="text-parchment-foreground/50 hover:text-parchment-foreground transition-colors"
+          className="flex items-center gap-1 text-parchment-foreground/50 hover:text-parchment-foreground transition-colors"
         >
           <Pencil className="w-4 h-4" />
+          Edit Quest
         </button>
       )}
       {!editing ? (
@@ -35,6 +38,7 @@ export default function QuestDetails({
           quest={quest}
           activeCharacter={activeCharacter}
           setQuests={setQuests}
+          characters={characters}
         />
       ) : (
         <UpdateQuestForm

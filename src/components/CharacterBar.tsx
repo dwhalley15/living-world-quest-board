@@ -24,7 +24,7 @@ export default function CharacterBar({
   setActiveCharacter,
   editCharacterProfile,
   setLoginOpen,
-  setCharCreateOpen,
+  setCharCreateOpen
 }: CharacterBarProps) {
   const [confirmLogoutOpen, setConfirmLogoutOpen] = useState(false)
 
@@ -90,7 +90,6 @@ export default function CharacterBar({
                   No
                 </button>
 
-                
               </div>
             </div>
           </Modal>
