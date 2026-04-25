@@ -8,6 +8,7 @@ import {
   Swords,
   User,
   UserPlus,
+  CircleOff,
 } from 'lucide-react'
 import { useServerFn, createServerFn } from '@tanstack/react-start'
 import { z } from 'zod'
@@ -18,6 +19,7 @@ import CharacterProfile from './CharacterProfile'
 import { unclaimQuest } from '#/server/unclaimQuestController'
 import CompleteQuestForm from './Forms/CompleteQuestForm'
 import AddToPartyList from './AddToPartyList'
+import { uncompleteQuest } from '../server/uncompleteQuestController'
 
 const claimQuestFn = createServerFn({ method: 'POST' })
   .inputValidator(
@@ -54,6 +56,22 @@ const unclaimQuestFn = createServerFn({ method: 'POST' })
     }
   })
 
+const uncompleteQuestFn = createServerFn({ method: 'POST' })
+  .inputValidator(
+    z.object({
+      questId: z.string().min(1),
+      activeCharacterId: z.string().min(1),
+    }),
+  )
+  .handler(async ({ data }) => {
+    try {
+      const quest = await uncompleteQuest(data.questId, data.activeCharacterId)
+      return { success: true, quest }
+    } catch (error: any) {
+      return { success: false, message: error.message }
+    }
+  })
+
 interface QuestViewProps {
   quest: Quest
   activeCharacter: Character | null
@@ -65,7 +83,7 @@ export default function QuestView({
   quest,
   activeCharacter,
   setQuests,
-  characters
+  characters,
 }: QuestViewProps) {
   const [error, setError] = useState<string | null>(null)
   const [showCharacterModal, setShowCharacterModal] = useState(false)
@@ -74,6 +92,9 @@ export default function QuestView({
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(
     null,
   )
+  const [showUncompletedQuestModal, setShowUncompletedQuestModal] =
+    useState(false)
+
   const isGod = activeCharacter?.role === 'god'
   const isClaimed = quest.partyLeader !== null
   const formattedDate = new Date(quest.dateTime).toLocaleDateString('en-US', {
@@ -95,6 +116,8 @@ export default function QuestView({
   const claimQuestServer = useServerFn(claimQuestFn)
 
   const unclaimQuestServer = useServerFn(unclaimQuestFn)
+
+  const uncompleteQuestServer = useServerFn(uncompleteQuestFn)
 
   const claimQuest = async () => {
     if (!activeCharacter) return
@@ -140,6 +163,30 @@ export default function QuestView({
       )
     } catch {
       setError('Failed to unclaim quest.')
+    }
+  }
+
+  const handleUncompleteQuest = async () => {
+    if (!activeCharacter) return
+
+    try {
+      const result = await uncompleteQuestServer({
+        data: {
+          questId: quest.id,
+          activeCharacterId: activeCharacter.id,
+        },
+      })
+
+      if (!result.success && !result.quest) {
+        setError('Failed to unresolve quest.')
+        return
+      }
+
+      setQuests((prev) =>
+        prev.map((q) => (q.id === quest.id ? result.quest : q)),
+      )
+    } catch {
+      setError('Failed to unresolve quest.')
     }
   }
 
@@ -219,15 +266,18 @@ export default function QuestView({
                 {member.name}
               </button>
             ))}
-            {fullParty < quest.partySize && isLeader && !quest.isCompleted && isClaimed && (
-              <button
-                onClick={() => setShowAddToPartyModal(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-parchment-foreground/10 hover:bg-parchment-foreground/20 rounded text-parchment-foreground text-xs font-display transition-colors cursor-pointer"
-              >
-                <UserPlus className="w-3 h-3" />
-                Add Adventurer
-              </button>
-            )}
+            {fullParty < quest.partySize &&
+              isLeader &&
+              !quest.isCompleted &&
+              isClaimed && (
+                <button
+                  onClick={() => setShowAddToPartyModal(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-parchment-foreground/10 hover:bg-parchment-foreground/20 rounded text-parchment-foreground text-xs font-display transition-colors cursor-pointer"
+                >
+                  <UserPlus className="w-3 h-3" />
+                  Add Adventurer
+                </button>
+              )}
             {fullParty === 0 && (
               <p className="text-xs italic text-parchment-foreground/40 font-body">
                 No adventurers have claimed this quest yet...
@@ -284,7 +334,7 @@ export default function QuestView({
                 </button>
               )}
 
-              {isGod && quest.partyLeader != null && (
+              {isGod && !quest.isCompleted && (
                 <button
                   onClick={() => {
                     setShowCompleteQuestModal(true)
@@ -297,6 +347,19 @@ export default function QuestView({
               )}
             </>
           )}
+
+          {/* Un-Complete Quest */}
+          {isGod && quest.isCompleted && (
+            <button
+              onClick={() => {
+                setShowUncompletedQuestModal(true)
+              }}
+              className="flex items-center gap-1.5 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-700 font-display text-sm rounded transition-colors"
+            >
+              <CircleOff className="w-3.5 h-3.5" />
+              Unresolve Quest
+            </button>
+          )}
         </div>
       </div>
 
@@ -307,7 +370,13 @@ export default function QuestView({
         size="sm"
       >
         {selectedCharacter && (
-          <CharacterProfile character={selectedCharacter} quest={quest} activeCharacter={activeCharacter} setQuests={setQuests} setShowCharacterModal={setShowCharacterModal} />
+          <CharacterProfile
+            character={selectedCharacter}
+            quest={quest}
+            activeCharacter={activeCharacter}
+            setQuests={setQuests}
+            setShowCharacterModal={setShowCharacterModal}
+          />
         )}
       </Modal>
 
@@ -338,6 +407,38 @@ export default function QuestView({
           characters={characters}
           setShowAddToPartyModal={setShowAddToPartyModal}
         />
+      </Modal>
+
+      <Modal
+        title="Unresold Quest"
+        open={showUncompletedQuestModal}
+        onClose={() => setShowUncompletedQuestModal(false)}
+        size="sm"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-parchment-foreground/80">
+            Are you sure you want to unresolve {quest.title}?
+          </p>
+
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={async () => {
+                await handleUncompleteQuest()
+                setShowUncompletedQuestModal(false)
+              }}
+              className="px-3 py-1.5 border border-red-500/40 rounded text-sm text-red-500 hover:bg-red-500/10"
+            >
+              Yes, Unresolve
+            </button>
+
+            <button
+              onClick={() => setShowUncompletedQuestModal(false)}
+              className="px-3 py-1.5 border border-red-500/40 rounded text-sm text-red-500 hover:bg-red-500/10"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
       </Modal>
     </>
   )

@@ -571,7 +571,6 @@ export async function getQuestByIdFromDb(questId: string) {
 
 export async function markQuestAsCompletedInDb(
   questId: string,
-  characterId: string,
   completedMessage: string,
   completedDateTime: string,
 ) {
@@ -581,10 +580,10 @@ export async function markQuestAsCompletedInDb(
     `
     UPDATE quests
     SET is_completed = TRUE, completion_message = $1, date_time = $2
-    WHERE id = $3 AND party_leader = $4
+    WHERE id = $3
     RETURNING *
     `,
-    [completedMessage, completedDateTime, questId, characterId],
+    [completedMessage, completedDateTime, questId],
   )
   let row: any = null
   if (Array.isArray(result) && result.length > 0) {
@@ -689,8 +688,9 @@ export async function removeCharacterFromQuestPartyInDb(
   return true
 }
 
-
-export async function getQuestsByCharacterId(characterId: string): Promise<Quest[]> {
+export async function getQuestsByCharacterId(
+  characterId: string,
+): Promise<Quest[]> {
   const db = await requireDb()
   const result = await db.query(
     `
@@ -699,7 +699,12 @@ export async function getQuestsByCharacterId(characterId: string): Promise<Quest
     [characterId],
   )
 
-  if (result && typeof result === 'object' && 'rows' in result && Array.isArray(result.rows)) {
+  if (
+    result &&
+    typeof result === 'object' &&
+    'rows' in result &&
+    Array.isArray(result.rows)
+  ) {
     return result.rows as Quest[]
   }
 
@@ -710,4 +715,32 @@ export async function getQuestsByCharacterId(characterId: string): Promise<Quest
     return result as Quest[]
   }
   return []
+}
+
+export async function markQuestAsIncompleteInDb(
+  questId: string,
+) {
+  const db = await requireDb()
+
+  const result = await db.query(
+    `
+    UPDATE quests
+    SET is_completed = FALSE, completion_message = NULL
+    WHERE id = $1
+    RETURNING *
+    `,
+    [questId],
+  )
+  let row: any = null
+  if (Array.isArray(result) && result.length > 0) {
+    row = result[0]
+  } else if (
+    result &&
+    'rows' in result &&
+    Array.isArray(result.rows) &&
+    result.rows.length > 0
+  ) {
+    row = result.rows[0]
+  }
+  return row
 }

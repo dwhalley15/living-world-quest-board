@@ -1,40 +1,33 @@
-import { getQuestByIdFromDb, getRoleById, markQuestAsCompletedInDb } from './db'
+import { getQuestByIdFromDb, getRoleById, markQuestAsIncompleteInDb } from './db'
 import type { Quest } from '#/types/quest'
 import { getSession } from './getSessionController'
 
-export async function completeQuest(
+export async function uncompleteQuest(
   questId: string,
   activeCharacterId: string,
-  completedMessage: string,
 ): Promise<Quest> {
-
-    // Validate session and character
+  // Validate session and character
   const sessionCharacterId = await getSession()
   if (!sessionCharacterId || sessionCharacterId !== activeCharacterId) {
     throw new Error('Unauthorized: No valid session found for the character.')
   }
 
- // Check if quest is already completed
+  // Check if quest is completed
   const isCompleted = await getQuestByIdFromDb(questId)
-  if (isCompleted?.is_completed) {
-    throw new Error('This quest has already been completed.')
+  if (isCompleted?.is_completed === false) {
+    throw new Error('This quest has not already been completed.')
   }
 
   // Check if character has god role
   const role = await getRoleById(activeCharacterId)
   if (!role || role.toLowerCase() !== 'god') {
-    throw new Error('Only characters with the God role can complete quests.') 
+    throw new Error('Only characters with the God role can complete quests.')
   }
 
-  // Mark quest as completed in the database
-  const completedDateTime = new Date().toISOString()
-  const completedQuest = await markQuestAsCompletedInDb(
-    questId,
-    completedMessage,
-    completedDateTime,
-  )
-  if (!completedQuest) {
-    throw new Error('Failed to complete quest. Please try again.')
+  //Set quest as no longer completed delete completed message
+  const uncompletedQuest = await markQuestAsIncompleteInDb(questId)
+  if (!uncompletedQuest) {
+    throw new Error('Failed to uncomplete quest. Please try again.')
   }
 
   // Retrieve the updated quest from the database
