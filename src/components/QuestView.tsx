@@ -95,8 +95,9 @@ export default function QuestView({
   const [showUncompletedQuestModal, setShowUncompletedQuestModal] =
     useState(false)
 
-  const isGod = activeCharacter?.role === 'god'
-  const isClaimed = quest.partyLeader !== null
+  const isGod = activeCharacter?.role?.toLowerCase() === 'god'
+const isCompleted = Boolean(quest?.isCompleted)
+const isClaimed = Boolean(quest?.partyLeader)
   const formattedDate = new Date(quest.dateTime).toLocaleDateString('en-US', {
     weekday: 'long',
     month: 'long',
@@ -297,7 +298,7 @@ export default function QuestView({
         </div>
 
         {/* Completion message */}
-        {quest.isCompleted && quest.completionMessage && (
+        {isCompleted && (
           <div className="mt-3 p-3 bg-parchment-foreground/5 rounded border border-parchment-foreground/10">
             <h4 className="text-xs font-display text-parchment-foreground/50 uppercase tracking-wider mb-1">
               Tale of Triumph
@@ -313,7 +314,7 @@ export default function QuestView({
         )}
 
         <div className="mt-5 flex gap-2">
-          {!quest.isCompleted && activeCharacter && (
+          {!isCompleted && activeCharacter && (
             <>
               {!isClaimed && (
                 <button
@@ -334,7 +335,7 @@ export default function QuestView({
                 </button>
               )}
 
-              {isGod && !quest.isCompleted && (
+              {isGod && !isCompleted && isClaimed && (
                 <button
                   onClick={() => {
                     setShowCompleteQuestModal(true)
@@ -349,7 +350,7 @@ export default function QuestView({
           )}
 
           {/* Un-Complete Quest */}
-          {isGod && quest.isCompleted && (
+          {isGod && isCompleted && (
             <button
               onClick={() => {
                 setShowUncompletedQuestModal(true)
