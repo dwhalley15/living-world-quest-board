@@ -1,5 +1,5 @@
 import type { Quest } from '../types/quest'
-import { getQuestByIdFromDb, removeCharacterFromQuestPartyInDb } from './db'
+import { getQuestByIdFromDb, getRoleById, removeCharacterFromQuestPartyInDb } from './db'
 import { getSession } from './getSessionController'
 
 export async function removeFromParty(
@@ -16,8 +16,13 @@ export async function removeFromParty(
 
   // Check if the character is the party leader of the quest
   const quest = await getQuestByIdFromDb(questId)
-  if (quest?.party_leader?.id !== sessionCharacterId) {
-    throw new Error('You must be the party leader to remove members from the party.')
+
+  const isLeader = quest?.party_leader?.id === sessionCharacterId
+  const characterRole = await getRoleById(sessionCharacterId)
+  const isGod = characterRole === 'god'
+
+  if (!isLeader && !isGod) {
+    throw new Error('You must be the party leader or have the God role to remove members from the party.')
   }
 
   // Check if quest is completed

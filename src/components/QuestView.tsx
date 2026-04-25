@@ -96,8 +96,8 @@ export default function QuestView({
     useState(false)
 
   const isGod = activeCharacter?.role?.toLowerCase() === 'god'
-const isCompleted = Boolean(quest?.isCompleted)
-const isClaimed = Boolean(quest?.partyLeader)
+  const isCompleted = Boolean(quest?.isCompleted)
+  const isClaimed = Boolean(quest?.partyLeader)
   const formattedDate = new Date(quest.dateTime).toLocaleDateString('en-US', {
     weekday: 'long',
     month: 'long',
@@ -332,6 +332,17 @@ const isClaimed = Boolean(quest?.partyLeader)
                 >
                   <Swords className="w-3.5 h-3.5 rotate-180" />
                   Unclaim Quest
+                </button>
+              )}
+
+              {/*Force an unclaim*/}
+              {isGod && isClaimed && !isLeader && (
+                <button
+                  onClick={unclaimQuest}
+                  className="flex items-center gap-1.5 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-700 font-display text-sm rounded transition-colors"
+                >
+                  <Swords className="w-3.5 h-3.5 rotate-180" />
+                  Revoke Claim
                 </button>
               )}
 

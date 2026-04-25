@@ -3,6 +3,7 @@ import {
   getQuestByIdFromDb,
   removePartyLeaderFromQuestInDb,
   removePartyFromQuestInDb,
+  getRoleById,
 } from './db'
 import { getSession } from './getSessionController'
 
@@ -10,7 +11,6 @@ export async function unclaimQuest(
   questId: string,
   activeCharacterId: string,
 ): Promise<Quest> {
-
   // Validate session and character
   const sessionCharacterId = await getSession()
   if (!sessionCharacterId || sessionCharacterId !== activeCharacterId) {
@@ -23,10 +23,25 @@ export async function unclaimQuest(
     throw new Error('This quest is not currently claimed by any adventurer.')
   }
 
-  // Check if the active character is the party leader of the quest
+  // Check if the active character has the God role or is the party leader of the quest
+  const characterRole = await getRoleById(activeCharacterId)
+  if (!characterRole) {
+    throw new Error('Unauthorized: Character role not found.')
+  }
+  const isGod = characterRole === 'god'
+  const isPartyLeader = isQuestClaimed.party_leader?.id === activeCharacterId
+  if (!isGod && !isPartyLeader) {
+    throw new Error(
+      'Unauthorized: Only the party leader or a character with the God role can unclaim this quest.',
+    )
+  }
+
+  const leaderId = isPartyLeader ? activeCharacterId : isQuestClaimed.party_leader?.id
+
+  // Unclaim the quest by removing the party leader
   const unclaimed = await removePartyLeaderFromQuestInDb(
     questId,
-    activeCharacterId,
+    leaderId,
   )
   if (!unclaimed) {
     throw new Error('Failed to unclaim quest. Please try again.')
@@ -35,7 +50,9 @@ export async function unclaimQuest(
   // Remove all party members from the quest
   const removeParty = await removePartyFromQuestInDb(questId)
   if (!removeParty) {
-    throw new Error('Failed to remove party members from quest. Please try again.')
+    throw new Error(
+      'Failed to remove party members from quest. Please try again.',
+    )
   }
 
   // Retrieve the updated quest from the database

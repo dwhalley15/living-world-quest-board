@@ -52,14 +52,16 @@ export default function CharacterProfile({
 
   const isLeader = quest.partyLeader?.id === activeCharacter?.id
 
+  const isGod = activeCharacter?.role?.toLowerCase() === 'god'
+
   const isCurrentUser = character.id === activeCharacter?.id
 
   const isInParty =
     quest.currentParty.some((c) => c.id === character.id) || isLeader
 
   const handleRemoveFromParty = async () => {
-    if (!isLeader) {
-      setError('Only the party leader can remove members.')
+    if (!isLeader && !isGod) {
+      setError('Only the party leader or a character with the God role can remove members.')
       return
     }
     setLoading(true)
@@ -132,7 +134,7 @@ export default function CharacterProfile({
           <p className="mt-2 text-xs text-red-500 font-body">{error}</p>
         )}
 
-        {!isCurrentUser && isInParty && isLeader && (
+        {!isCurrentUser && isInParty && (isLeader || isGod) && (
           <button
             className="flex items-center gap-1 px-3 py-1 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-700 font-display text-xs rounded transition-colors"
             onClick={() => handleRemoveFromParty()}
