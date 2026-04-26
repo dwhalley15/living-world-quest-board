@@ -13,6 +13,7 @@ import EditCharacterForm from '../components/Forms/UpdateCharacterForm'
 import QuestBoard from '../components/QuestBoard'
 import { getQuests } from '../server/getQuestsController'
 import { getCharacters } from '../server/getCharactersController'
+import { z } from 'zod'
 
 const sessionLoader = createServerFn({ method: 'GET' }).handler(() => {
   return getSession()
@@ -26,19 +27,31 @@ const charactersLoader = createServerFn({ method: 'GET' }).handler(async () => {
   return getCharacters()
 })
 
+const activeCharacterLoader = createServerFn({ method: 'GET' })
+  .inputValidator(
+    z.object({
+      characterId: z.string(),
+    }),
+  )
+  .handler(async ({ data }: { data: { characterId: string } }) => {
+    return getCharacterById(data.characterId)
+  })
+
 export const Route = createFileRoute('/')({
   component: App,
   loader: async () => {
     const characterId = await sessionLoader()
     let activeCharacter: Character | null = null
     if (characterId) {
-      const characterData = await getCharacterById(characterId)
-      activeCharacter = characterData
+      activeCharacter = await activeCharacterLoader({
+        data: { characterId },
+      })
     }
     const quests = await questLoader()
     const characters = await charactersLoader()
     return { activeCharacter, quests, characters }
   },
+  staleTime: 0,
 })
 
 function App() {
