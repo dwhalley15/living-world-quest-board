@@ -18,7 +18,7 @@ export default function QuestBoard({
   activeCharacter,
   quests,
   setQuests,
-  characters
+  characters,
 }: QuestBoardProps) {
   const [activeTab, setActiveTab] = useState<
     'unclaimed' | 'inProgress' | 'completed'
@@ -52,9 +52,8 @@ export default function QuestBoard({
   return (
     <>
       <section>
-
         {isGod && (
-          <div className='flex items-end justify-end mb-6'>
+          <div className="flex items-end justify-end mb-6">
             <motion.button
               onClick={() => setCreateOpen(true)}
               className="flex items-center gap-2 px-4 py-2 bg-primary/20 hover:bg-primary/30 border border-primary/30 text-primary font-display text-sm rounded transition-colors"
@@ -64,9 +63,9 @@ export default function QuestBoard({
               <Plus className="w-4 h-4" />
               Post Quest
             </motion.button>
-            </div>
-          )}
-        <div className="flex items-center justify-between mb-6"> 
+          </div>
+        )}
+        <div className="flex items-center justify-between mb-6">
           <div className="grid grid-cols-2 w-full sm:flex gap-1 bg-secondary/50 backdrop-blur-sm rounded p-1 sm:w-auto">
             <button
               onClick={() => setActiveTab('unclaimed')}
@@ -77,7 +76,7 @@ export default function QuestBoard({
               }`}
             >
               <Scroll className="w-4 h-4" />
-              Unclaimed ({unclaimedQuests.length})
+              <h2>Unclaimed ({unclaimedQuests.length})</h2>
             </button>
             <button
               onClick={() => setActiveTab('inProgress')}
@@ -88,7 +87,7 @@ export default function QuestBoard({
               }`}
             >
               <Swords className="w-4 h-4" />
-              In Progress ({inProgressQuests.length})
+              <h2>In Progress ({inProgressQuests.length})</h2>
             </button>
             <button
               onClick={() => setActiveTab('completed')}
@@ -99,7 +98,7 @@ export default function QuestBoard({
               }`}
             >
               <Trophy className="w-4 h-4" />
-              Completed ({completedQuests.length})
+              <h2>Completed ({completedQuests.length})</h2>
             </button>
           </div>
         </div>

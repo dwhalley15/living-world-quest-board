@@ -14,6 +14,7 @@ import QuestBoard from '../components/QuestBoard'
 import { getQuests } from '../server/getQuestsController'
 import { getCharacters } from '../server/getCharactersController'
 import { z } from 'zod'
+import Header from '../components/Header'
 
 const sessionLoader = createServerFn({ method: 'GET' }).handler(() => {
   return getSession()
@@ -66,7 +67,8 @@ function App() {
   const [characters, setCharacters] = useState(loaderData.characters)
 
   return (
-    <main className="relative z-10 max-w-6xl mx-auto px-4 py-8">
+    <>
+      <Header title="Quest Board" text="Seek glory, find adventure" />
       <CharacterBar
         activeCharacter={activeCharacter}
         setActiveCharacter={setActiveCharacter}
@@ -136,6 +138,6 @@ function App() {
           }}
         />
       </Modal>
-    </main>
+    </>
   )
 }

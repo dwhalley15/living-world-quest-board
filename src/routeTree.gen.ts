@@ -9,9 +9,27 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TermsRouteImport } from './routes/terms'
+import { Route as RulesRouteImport } from './routes/rules'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiImageUploaderRouteImport } from './routes/api/imageUploader'
 
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RulesRoute = RulesRouteImport.update({
+  id: '/rules',
+  path: '/rules',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -25,32 +43,65 @@ const ApiImageUploaderRoute = ApiImageUploaderRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/privacy': typeof PrivacyRoute
+  '/rules': typeof RulesRoute
+  '/terms': typeof TermsRoute
   '/api/imageUploader': typeof ApiImageUploaderRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/privacy': typeof PrivacyRoute
+  '/rules': typeof RulesRoute
+  '/terms': typeof TermsRoute
   '/api/imageUploader': typeof ApiImageUploaderRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/privacy': typeof PrivacyRoute
+  '/rules': typeof RulesRoute
+  '/terms': typeof TermsRoute
   '/api/imageUploader': typeof ApiImageUploaderRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/api/imageUploader'
+  fullPaths: '/' | '/privacy' | '/rules' | '/terms' | '/api/imageUploader'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/api/imageUploader'
-  id: '__root__' | '/' | '/api/imageUploader'
+  to: '/' | '/privacy' | '/rules' | '/terms' | '/api/imageUploader'
+  id: '__root__' | '/' | '/privacy' | '/rules' | '/terms' | '/api/imageUploader'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  PrivacyRoute: typeof PrivacyRoute
+  RulesRoute: typeof RulesRoute
+  TermsRoute: typeof TermsRoute
   ApiImageUploaderRoute: typeof ApiImageUploaderRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rules': {
+      id: '/rules'
+      path: '/rules'
+      fullPath: '/rules'
+      preLoaderRoute: typeof RulesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -70,6 +121,9 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  PrivacyRoute: PrivacyRoute,
+  RulesRoute: RulesRoute,
+  TermsRoute: TermsRoute,
   ApiImageUploaderRoute: ApiImageUploaderRoute,
 }
 export const routeTree = rootRouteImport

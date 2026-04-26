@@ -1,6 +1,5 @@
 import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
 import Footer from '../components/Footer'
-import Header from '../components/Header'
 
 import appCss from '../styles.css?url'
 
@@ -48,7 +47,8 @@ export const Route = createRootRoute({
       },
       {
         property: 'og:image',
-        content: 'https://frw6rziicw61rtm1.public.blob.vercel-storage.com/quest-board/quest-board-desktop.png',
+        content:
+          'https://frw6rziicw61rtm1.public.blob.vercel-storage.com/quest-board/quest-board-desktop.png',
       },
 
       // Twitter
@@ -66,7 +66,8 @@ export const Route = createRootRoute({
       },
       {
         name: 'twitter:image',
-        content: 'https://frw6rziicw61rtm1.public.blob.vercel-storage.com/quest-board/quest-board-desktop.png',
+        content:
+          'https://frw6rziicw61rtm1.public.blob.vercel-storage.com/quest-board/quest-board-desktop.png',
       },
     ],
     links: [
@@ -127,71 +128,71 @@ export const Route = createRootRoute({
 
   errorComponent: ({ error }: { error: Error }) => (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-    {/* Overlay */}
-    <div className="absolute inset-0 bg-black/70 backdrop-blur-[2px]" />
+      {/* Overlay */}
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-[2px]" />
 
-    {/* Panel */}
-    <div
-      className="relative w-full max-w-md overflow-hidden rounded-md shadow-xl"
-      style={{
-        backgroundImage:
-          'url(https://frw6rziicw61rtm1.public.blob.vercel-storage.com/quest-board/parchment.jpg)',
-        backgroundSize: 'cover',
-      }}
-    >
-      <div className="p-6">
-        <h2 className="font-quest text-2xl text-parchment-foreground mb-2">
-          Something went wrong
-        </h2>
+      {/* Panel */}
+      <div
+        className="relative w-full max-w-md overflow-hidden rounded-md shadow-xl"
+        style={{
+          backgroundImage:
+            'url(https://frw6rziicw61rtm1.public.blob.vercel-storage.com/quest-board/parchment.jpg)',
+          backgroundSize: 'cover',
+        }}
+      >
+        <div className="p-6">
+          <h2 className="font-quest text-2xl text-parchment-foreground mb-2">
+            Something went wrong
+          </h2>
 
-        <p className="text-sm text-parchment-foreground/70">
-          {error.message || 'Unexpected error occurred'}
-        </p>
+          <p className="text-sm text-parchment-foreground/70">
+            {error.message || 'Unexpected error occurred'}
+          </p>
 
-        <button
-          onClick={() => window.location.reload()}
-          className="mt-6 px-4 py-2 rounded border border-parchment-foreground/30 hover:bg-parchment-foreground/10 text-parchment-foreground"
-        >
-          Retry Quest
-        </button>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-6 px-4 py-2 rounded border border-parchment-foreground/30 hover:bg-parchment-foreground/10 text-parchment-foreground"
+          >
+            Retry Quest
+          </button>
+        </div>
       </div>
     </div>
-  </div>
   ),
 
   // ✅ 404s (no matching route)
   notFoundComponent: () => (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-    {/* Overlay */}
-    <div className="absolute inset-0 bg-black/70 backdrop-blur-[2px]" />
+      {/* Overlay */}
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-[2px]" />
 
-    {/* Panel */}
-    <div
-      className="relative w-full max-w-md overflow-hidden rounded-md shadow-xl"
-      style={{
-        backgroundImage:
-          'url(https://frw6rziicw61rtm1.public.blob.vercel-storage.com/quest-board/parchment.jpg)',
-        backgroundSize: 'cover',
-      }}
-    >
-      <div className="p-6 text-center">
-        <h2 className="font-quest text-2xl text-parchment-foreground mb-2">
-          404 — Lost in the Realm
-        </h2>
+      {/* Panel */}
+      <div
+        className="relative w-full max-w-md overflow-hidden rounded-md shadow-xl"
+        style={{
+          backgroundImage:
+            'url(https://frw6rziicw61rtm1.public.blob.vercel-storage.com/quest-board/parchment.jpg)',
+          backgroundSize: 'cover',
+        }}
+      >
+        <div className="p-6 text-center">
+          <h2 className="font-quest text-2xl text-parchment-foreground mb-2">
+            404 — Lost in the Realm
+          </h2>
 
-        <p className="text-sm text-parchment-foreground/70">
-          This path does not exist in the world of quests.
-        </p>
+          <p className="text-sm text-parchment-foreground/70">
+            This path does not exist in the world of quests.
+          </p>
 
-        <button
-          onClick={() => window.location.href = '/'}
-          className="mt-6 px-4 py-2 rounded border border-parchment-foreground/30 hover:bg-parchment-foreground/10 text-parchment-foreground"
-        >
-          Return to Board
-        </button>
+          <button
+            onClick={() => (window.location.href = '/')}
+            className="mt-6 px-4 py-2 rounded border border-parchment-foreground/30 hover:bg-parchment-foreground/10 text-parchment-foreground"
+          >
+            Return to Board
+          </button>
+        </div>
       </div>
     </div>
-  </div>
   ),
 })
 
@@ -202,7 +203,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body
-        className="min-h-screen relative"
+        className="min-h-screen relative grid grid-rows-[1fr_auto]"
         style={{
           backgroundImage:
             'url(https://frw6rziicw61rtm1.public.blob.vercel-storage.com/quest-board/quest-board-bg.jpg)',
@@ -219,8 +220,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
               'radial-gradient(ellipse at center, transparent 40%, hsl(30 15% 5% / 0.7) 100%)',
           }}
         />
-        <Header />
-        {children}
+        <main className="z-10 w-full">
+          <div className="max-w-6xl mx-auto px-4 py-8">{children}</div>
+        </main>
         <Footer />
         <Scripts />
       </body>
