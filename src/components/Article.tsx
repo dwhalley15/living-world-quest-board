@@ -22,7 +22,7 @@ export default function Article({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-50px' }}
       transition={{ delay: index * 0.05 }}
-      style={{ transform: `rotate(${index % 2 === 0 ? -0.4 : 0.4}deg)` }}
+      style={{ rotate: `${index % 2 === 0 ? -0.4 : 0.4}deg` }}
       className="relative bg-[hsl(var(--parchment))] text-[hsl(var(--parchment-foreground))] parchment-shadow px-6 md:px-10 py-8"
     >
       {/* corner pins */}

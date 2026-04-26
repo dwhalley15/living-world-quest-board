@@ -53,7 +53,7 @@ export default function Footer() {
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.08 }}
                   whileHover={{ rotate: 0, scale: 1.04, y: -2 }}
-                  style={{ transform: `rotate(${rotation}deg)` }}
+                  style={{ rotate: `${rotation}deg` }}
                   className="group relative block px-4 py-3 text-center bg-[hsl(var(--parchment))] text-[hsl(var(--parchment-foreground))] shadow-[0_4px_12px_hsl(0_0%_0%/0.5)] transition-shadow hover:shadow-[0_6px_20px_hsl(38_80%_55%/0.35)]"
                 >
                   {/* pin */}
