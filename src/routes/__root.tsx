@@ -220,7 +220,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
               'radial-gradient(ellipse at center, transparent 40%, hsl(30 15% 5% / 0.7) 100%)',
           }}
         />
-        <main className="z-10 w-full">
+        <main className="w-full">
           <div className="max-w-6xl mx-auto px-4 py-8">{children}</div>
         </main>
         <Footer />
